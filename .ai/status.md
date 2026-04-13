@@ -4,14 +4,14 @@
 - **Pipeline:** app
 - **Platform:** web
 - **Current version:** v0.0.0
-- **Current stage:** prd
+- **Current stage:** architect
 
 ## Stages
 
 | # | Stage | Status | Date | Notes |
 |---|-------|--------|------|-------|
 | 1 | discovery | completed | 2026-04-13 | 16 рішень, elevator pitch, roadmap |
-| 2 | prd | pending | — | — |
+| 2 | prd | completed | 2026-04-13 | 16 stories, 4 roles, override pattern R-017 |
 | 3 | architect | pending | — | — |
 | 4 | design | pending | — | — |
 | 5 | frontend-skeleton | pending | — | — |
