@@ -15,6 +15,7 @@
 - Override pattern (R-017): buf_* + custom_* поля для захисту збагачених даних
 - Architecture: Monolith, FastAPI + React + PostgreSQL, 8 таблиць, 42 API endpoints
 - Decisions: DEC-001 (backend), DEC-002 (frontend), DEC-003 (pattern)
+- Design: 12 screens, design system (colors, typography, 25 shadcn/ui components), UI patterns
 
 ### Changed
 ### Fixed
