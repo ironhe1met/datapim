@@ -1,0 +1,191 @@
+[
+  {
+    "id": 1,
+    "external_id": "18000",
+    "name": "Електроінструменти",
+    "parent_id": null,
+    "is_active": true,
+    "product_count": 12,
+    "children": []
+  },
+  {
+    "id": 2,
+    "external_id": "18001",
+    "name": "Дрилі та шуруповерти",
+    "parent_id": 1,
+    "is_active": true,
+    "product_count": 4,
+    "children": []
+  },
+  {
+    "id": 3,
+    "external_id": "18002",
+    "name": "Болгарки (КШМ)",
+    "parent_id": 1,
+    "is_active": true,
+    "product_count": 3,
+    "children": []
+  },
+  {
+    "id": 4,
+    "external_id": "18003",
+    "name": "Перфоратори",
+    "parent_id": 1,
+    "is_active": true,
+    "product_count": 3,
+    "children": []
+  },
+  {
+    "id": 5,
+    "external_id": "18004",
+    "name": "Лобзики",
+    "parent_id": 1,
+    "is_active": false,
+    "product_count": 2,
+    "children": []
+  },
+  {
+    "id": 6,
+    "external_id": "32000",
+    "name": "Бензоінструменти",
+    "parent_id": null,
+    "is_active": true,
+    "product_count": 6,
+    "children": []
+  },
+  {
+    "id": 7,
+    "external_id": "32001",
+    "name": "Бензопили",
+    "parent_id": 6,
+    "is_active": true,
+    "product_count": 3,
+    "children": []
+  },
+  {
+    "id": 8,
+    "external_id": "32002",
+    "name": "Мотокоси",
+    "parent_id": 6,
+    "is_active": true,
+    "product_count": 2,
+    "children": []
+  },
+  {
+    "id": 9,
+    "external_id": "32003",
+    "name": "Повітродувки",
+    "parent_id": 6,
+    "is_active": false,
+    "product_count": 1,
+    "children": []
+  },
+  {
+    "id": 10,
+    "external_id": "32006",
+    "name": "Зварювальне обладнання",
+    "parent_id": null,
+    "is_active": true,
+    "product_count": 5,
+    "children": []
+  },
+  {
+    "id": 11,
+    "external_id": "32007",
+    "name": "Інвертори MMA",
+    "parent_id": 10,
+    "is_active": true,
+    "product_count": 3,
+    "children": []
+  },
+  {
+    "id": 12,
+    "external_id": "32008",
+    "name": "Напівавтомати MIG/MAG",
+    "parent_id": 10,
+    "is_active": true,
+    "product_count": 2,
+    "children": []
+  },
+  {
+    "id": 13,
+    "external_id": "32011",
+    "name": "Компресори",
+    "parent_id": null,
+    "is_active": true,
+    "product_count": 4,
+    "children": []
+  },
+  {
+    "id": 14,
+    "external_id": "32012",
+    "name": "Поршневі компресори",
+    "parent_id": 13,
+    "is_active": true,
+    "product_count": 2,
+    "children": []
+  },
+  {
+    "id": 15,
+    "external_id": "32013",
+    "name": "Гвинтові компресори",
+    "parent_id": 13,
+    "is_active": true,
+    "product_count": 2,
+    "children": []
+  },
+  {
+    "id": 16,
+    "external_id": "40000",
+    "name": "Запчастини",
+    "parent_id": null,
+    "is_active": true,
+    "product_count": 3,
+    "children": []
+  },
+  {
+    "id": 17,
+    "external_id": "40001",
+    "name": "Щітки вугільні",
+    "parent_id": 16,
+    "is_active": true,
+    "product_count": 1,
+    "children": []
+  },
+  {
+    "id": 18,
+    "external_id": "40002",
+    "name": "Редуктори",
+    "parent_id": 16,
+    "is_active": true,
+    "product_count": 2,
+    "children": []
+  },
+  {
+    "id": 19,
+    "external_id": "50000",
+    "name": "Витратні матеріали",
+    "parent_id": null,
+    "is_active": true,
+    "product_count": 4,
+    "children": []
+  },
+  {
+    "id": 20,
+    "external_id": "50001",
+    "name": "Диски відрізні",
+    "parent_id": 19,
+    "is_active": true,
+    "product_count": 2,
+    "children": []
+  },
+  {
+    "id": 21,
+    "external_id": "50002",
+    "name": "Свердла",
+    "parent_id": 19,
+    "is_active": true,
+    "product_count": 2,
+    "children": []
+  }
+]

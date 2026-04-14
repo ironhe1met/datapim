@@ -16,6 +16,10 @@
 - Architecture: Monolith, FastAPI + React + PostgreSQL, 8 таблиць, 42 API endpoints
 - Decisions: DEC-001 (backend), DEC-002 (frontend), DEC-003 (pattern)
 - Design: 12 screens, design system (colors, typography, 25 shadcn/ui components), UI patterns
+- Frontend skeleton: React + Vite + TypeScript + shadcn/ui + Tailwind v4 + Zustand + react-i18next
+- All screens implemented with MSW mocks, auth flow, RBAC, dark mode, i18n (UK)
+- Characteristics CRUD with dialogs, category tree with create/edit, override pattern UI
+- Decisions: R-018 (AI as optional module), R-019 (enrichment status — manual for v1.0), R-020 (v1.0 scope revision)
 
 ### Changed
 ### Fixed

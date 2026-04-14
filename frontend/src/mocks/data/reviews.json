@@ -1,0 +1,317 @@
+[
+  {
+    "id": 1,
+    "product_id": 1,
+    "type": "text",
+    "provider": "anthropic",
+    "status": "pending",
+    "output_data": {
+      "description": "Професійний акумуляторний дриль-шуруповерт Makita DHP486Z з безщітковим двигуном BL. Забезпечує максимальний крутний момент 130 Нм при компактних розмірах. Сумісний з усіма акумуляторами серії LXT 18V. Ідеальний для професійного використання на будмайданчику.",
+      "seo_title": "Купити Makita DHP486Z 18V LXT — акумуляторний дриль-шуруповерт BL",
+      "seo_description": "Makita DHP486Z акумуляторний дриль-шуруповерт 18V LXT з безщітковим двигуном. 130 Нм крутний момент. Офіційна гарантія. Доставка по Україні."
+    },
+    "cost_usd": 0.04,
+    "duration_ms": 3200,
+    "created_at": "2026-04-12T10:15:00Z"
+  },
+  {
+    "id": 2,
+    "product_id": 2,
+    "type": "text",
+    "provider": "openai",
+    "status": "pending",
+    "output_data": {
+      "description": "Bosch GSR 18V-90 C Professional — інноваційний акумуляторний шуруповерт з підтримкою Bluetooth та додатком Connected. Електронне безступінчасте регулювання крутного моменту забезпечує точну роботу.",
+      "seo_title": "Bosch GSR 18V-90 C Professional — шуруповерт з Bluetooth",
+      "seo_description": "Купити Bosch GSR 18V-90 C Professional з Bluetooth. Електронне керування крутним моментом. Доставка по Україні."
+    },
+    "cost_usd": 0.06,
+    "duration_ms": 4100,
+    "created_at": "2026-04-12T10:20:00Z"
+  },
+  {
+    "id": 3,
+    "product_id": 3,
+    "type": "text",
+    "provider": "anthropic",
+    "status": "pending",
+    "output_data": {
+      "description": "DeWalt DCD999B 20V MAX FLEXVOLT Advantage — потужний дриль-шуруповерт з технологією FLEXVOLT Advantage. Підвищена продуктивність при використанні з акумуляторами FLEXVOLT.",
+      "seo_title": "DeWalt DCD999B 20V MAX — дриль-шуруповерт FLEXVOLT Advantage"
+    },
+    "cost_usd": 0.03,
+    "duration_ms": 2800,
+    "created_at": "2026-04-12T11:00:00Z"
+  },
+  {
+    "id": 4,
+    "product_id": 5,
+    "type": "text",
+    "provider": "google",
+    "status": "approved",
+    "output_data": {
+      "description": "Makita GA5030 — надійна кутова шліфмашина потужністю 720 Вт з діаметром диска 125 мм. Компактний корпус та зручна рукоятка для тривалої роботи.",
+      "seo_title": "Makita GA5030 — болгарка 125 мм 720 Вт",
+      "seo_description": "Купити Makita GA5030 кутову шліфмашину 125 мм 720 Вт. Компактна та легка. Доставка по Україні."
+    },
+    "cost_usd": 0.05,
+    "duration_ms": 5200,
+    "created_at": "2026-04-10T09:30:00Z"
+  },
+  {
+    "id": 5,
+    "product_id": 6,
+    "type": "text",
+    "provider": "anthropic",
+    "status": "approved",
+    "output_data": {
+      "description": "Bosch GWS 22-230 JH Professional — потужна болгарка з двигуном 2200 Вт для інтенсивної роботи. Діаметр диска 230 мм. Плавний пуск та захист від перевантаження.",
+      "seo_title": "Bosch GWS 22-230 JH Professional — болгарка 230 мм"
+    },
+    "cost_usd": 0.04,
+    "duration_ms": 3500,
+    "created_at": "2026-04-10T10:00:00Z"
+  },
+  {
+    "id": 6,
+    "product_id": 7,
+    "type": "image",
+    "provider": "dalle",
+    "status": "pending",
+    "output_data": {
+      "image_url": "https://placehold.co/800x800/e2e8f0/64748b?text=AI+Generated+Makita+HR2470"
+    },
+    "cost_usd": 0.08,
+    "duration_ms": 12000,
+    "created_at": "2026-04-12T14:00:00Z"
+  },
+  {
+    "id": 7,
+    "product_id": 8,
+    "type": "text",
+    "provider": "openai",
+    "status": "approved",
+    "output_data": {
+      "description": "Bosch GBH 2-28 F Professional — універсальний перфоратор з трьома режимами роботи. Потужність 880 Вт, енергія удару 3.2 Дж. Швидкозмінний патрон SDS-plus.",
+      "seo_title": "Bosch GBH 2-28 F Professional — перфоратор SDS-plus",
+      "seo_description": "Купити Bosch GBH 2-28 F Professional перфоратор. 880 Вт, 3.2 Дж. Три режими роботи. Доставка по Україні."
+    },
+    "cost_usd": 0.05,
+    "duration_ms": 4800,
+    "created_at": "2026-04-09T15:30:00Z"
+  },
+  {
+    "id": 8,
+    "product_id": 9,
+    "type": "text",
+    "provider": "google",
+    "status": "rejected",
+    "output_data": {
+      "description": "Електролобзик Makita — хороший інструмент для різки.",
+      "seo_title": "Лобзик Makita"
+    },
+    "cost_usd": 0.02,
+    "duration_ms": 2100,
+    "created_at": "2026-04-08T12:00:00Z"
+  },
+  {
+    "id": 9,
+    "product_id": 10,
+    "type": "text",
+    "provider": "anthropic",
+    "status": "rejected",
+    "output_data": {
+      "description": "Бензопила — це інструмент для різки дерева.",
+      "seo_title": "Бензопила"
+    },
+    "cost_usd": 0.02,
+    "duration_ms": 2000,
+    "created_at": "2026-04-07T11:00:00Z"
+  },
+  {
+    "id": 10,
+    "product_id": 11,
+    "type": "text",
+    "provider": "openai",
+    "status": "pending",
+    "output_data": {
+      "description": "Husqvarna 450 II — професійна бензопила з двигуном X-Torq. Робочий об'єм 50.2 см³, потужність 3.2 к.с. Система Air Injection для подовженого ресурсу фільтра.",
+      "seo_title": "Husqvarna 450 II — бензопила X-Torq 50.2 см³",
+      "seo_description": "Купити Husqvarna 450 II професійну бензопилу. X-Torq, Air Injection, Smart Start. Офіційна гарантія."
+    },
+    "cost_usd": 0.07,
+    "duration_ms": 5100,
+    "created_at": "2026-04-12T09:00:00Z"
+  },
+  {
+    "id": 11,
+    "product_id": 12,
+    "type": "image",
+    "provider": "flux",
+    "status": "pending",
+    "output_data": {
+      "image_url": "https://placehold.co/800x800/e2e8f0/64748b?text=AI+Generated+Stihl+FS+131"
+    },
+    "cost_usd": 0.10,
+    "duration_ms": 15000,
+    "created_at": "2026-04-12T13:00:00Z"
+  },
+  {
+    "id": 12,
+    "product_id": 13,
+    "type": "text",
+    "provider": "anthropic",
+    "status": "approved",
+    "output_data": {
+      "description": "Husqvarna 525BX — потужна бензинова повітродувка для професійного використання. Двигун X-Torq забезпечує низькі викиди та економію палива. Швидкість повітряного потоку до 76 м/с.",
+      "seo_title": "Husqvarna 525BX — бензинова повітродувка X-Torq"
+    },
+    "cost_usd": 0.04,
+    "duration_ms": 3600,
+    "created_at": "2026-04-09T08:00:00Z"
+  },
+  {
+    "id": 13,
+    "product_id": 14,
+    "type": "text",
+    "provider": "google",
+    "status": "pending",
+    "output_data": {
+      "description": "Патон ВДИ-250Е — зварювальний інвертор професійного класу. Діапазон зварювального струму 10-250 А. ККД 85%. Захист від перегріву та перевантаження. Підходить для електродів діаметром 1.6-5.0 мм.",
+      "seo_title": "Патон ВДИ-250Е — зварювальний інвертор 250 А",
+      "seo_description": "Купити Патон ВДИ-250Е зварювальний інвертор. 10-250 А, ККД 85%. Професійний клас. Доставка."
+    },
+    "cost_usd": 0.06,
+    "duration_ms": 4500,
+    "created_at": "2026-04-11T16:00:00Z"
+  },
+  {
+    "id": 14,
+    "product_id": 15,
+    "type": "text",
+    "provider": "openai",
+    "status": "rejected",
+    "output_data": {
+      "description": "Зварювальний апарат для зварювання металу.",
+      "seo_title": "Зварювальний апарат"
+    },
+    "cost_usd": 0.02,
+    "duration_ms": 2200,
+    "created_at": "2026-04-06T14:00:00Z"
+  },
+  {
+    "id": 15,
+    "product_id": 16,
+    "type": "text",
+    "provider": "anthropic",
+    "status": "approved",
+    "output_data": {
+      "description": "Jasic MIG-250 (N289) — напівавтомат зварювальний для MIG/MAG зварювання. Потужність 250 А. Синергетичне керування для простого налаштування. Підходить для дроту 0.8-1.2 мм.",
+      "seo_title": "Jasic MIG-250 — напівавтомат зварювальний MIG/MAG",
+      "seo_description": "Купити Jasic MIG-250 напівавтомат зварювальний. 250 А, синергетичне керування. Доставка по Україні."
+    },
+    "cost_usd": 0.05,
+    "duration_ms": 4200,
+    "created_at": "2026-04-08T10:00:00Z"
+  },
+  {
+    "id": 16,
+    "product_id": 17,
+    "type": "image",
+    "provider": "dalle",
+    "status": "rejected",
+    "output_data": {
+      "image_url": "https://placehold.co/800x800/e2e8f0/64748b?text=AI+Generated+Kompressor"
+    },
+    "cost_usd": 0.08,
+    "duration_ms": 11000,
+    "created_at": "2026-04-05T09:00:00Z"
+  },
+  {
+    "id": 17,
+    "product_id": 18,
+    "type": "text",
+    "provider": "anthropic",
+    "status": "partial",
+    "output_data": {
+      "description": "Forte VFL-50 — поршневий компресор з ресивером 50 л. Продуктивність 200 л/хв. Потужність двигуна 1.5 кВт. Максимальний тиск 8 бар. Два циліндри для стабільної подачі повітря.",
+      "seo_title": "Forte VFL-50 — поршневий компресор 50 л",
+      "seo_description": "Купити Forte VFL-50 поршневий компресор. 50 л, 200 л/хв, 8 бар. Два циліндри. Доставка.",
+      "attributes": "Об'єм ресивера: 50 л; Продуктивність: 200 л/хв"
+    },
+    "cost_usd": 0.09,
+    "duration_ms": 6200,
+    "created_at": "2026-04-11T11:00:00Z"
+  },
+  {
+    "id": 18,
+    "product_id": 19,
+    "type": "image",
+    "provider": "flux",
+    "status": "pending",
+    "output_data": {
+      "image_url": "https://placehold.co/800x800/e2e8f0/64748b?text=AI+Generated+Screw+Compressor"
+    },
+    "cost_usd": 0.12,
+    "duration_ms": 18000,
+    "created_at": "2026-04-12T15:00:00Z"
+  },
+  {
+    "id": 19,
+    "product_id": 20,
+    "type": "text",
+    "provider": "openai",
+    "status": "partial",
+    "output_data": {
+      "description": "Компресор гвинтовий AirPol K5 — промислове обладнання з прямим приводом. Продуктивність 650 л/хв при тиску 10 бар. Вбудована система осушення повітря.",
+      "seo_title": "AirPol K5 — гвинтовий компресор промисловий",
+      "seo_description": "Купити AirPol K5 гвинтовий компресор. 650 л/хв, 10 бар. Промисловий клас. Осушувач в комплекті."
+    },
+    "cost_usd": 0.07,
+    "duration_ms": 5800,
+    "created_at": "2026-04-10T14:00:00Z"
+  },
+  {
+    "id": 20,
+    "product_id": 4,
+    "type": "text",
+    "provider": "anthropic",
+    "status": "approved",
+    "output_data": {
+      "description": "Milwaukee M18 FPD3-0X FUEL — акумуляторний ударний дриль-шуруповерт нового покоління з безщітковим двигуном POWERSTATE. 158 Нм крутний момент. ONE-KEY управління через додаток.",
+      "seo_title": "Milwaukee M18 FPD3 FUEL — ударний дриль-шуруповерт 18V",
+      "seo_description": "Купити Milwaukee M18 FPD3-0X FUEL ударний дриль-шуруповерт. 158 Нм, безщітковий, ONE-KEY. Доставка по Україні."
+    },
+    "cost_usd": 0.05,
+    "duration_ms": 4000,
+    "created_at": "2026-04-09T12:00:00Z"
+  },
+  {
+    "id": 21,
+    "product_id": 3,
+    "type": "image",
+    "provider": "dalle",
+    "status": "pending",
+    "output_data": {
+      "image_url": "https://placehold.co/800x800/e2e8f0/64748b?text=AI+Generated+DeWalt+DCD999B"
+    },
+    "cost_usd": 0.08,
+    "duration_ms": 13500,
+    "created_at": "2026-04-12T16:30:00Z"
+  },
+  {
+    "id": 22,
+    "product_id": 14,
+    "type": "text",
+    "provider": "anthropic",
+    "status": "pending",
+    "output_data": {
+      "description": "Патон ВДИ-250Е — високоякісний зварювальний інвертор українського виробництва. Діапазон зварювального струму 10-250 А при ПВ 60%. Вага всього 5.5 кг.",
+      "seo_title": "Патон ВДИ-250Е — зварювальний інвертор Made in Ukraine",
+      "seo_description": "Патон ВДИ-250Е інвертор зварювальний. 250 А, ПВ 60%. Легкий — 5.5 кг. Українське виробництво. Доставка."
+    },
+    "cost_usd": 0.04,
+    "duration_ms": 3300,
+    "created_at": "2026-04-13T08:00:00Z"
+  }
+]

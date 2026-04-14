@@ -1,0 +1,331 @@
+{
+  "common": {
+    "save": "Зберегти",
+    "cancel": "Скасувати",
+    "delete": "Видалити",
+    "loading": "Завантаження...",
+    "no_results": "Нічого не знайдено",
+    "access_denied": "Доступ заборонено",
+    "retry": "Спробувати знову",
+    "back_home": "На головну",
+    "actions": "Дії"
+  },
+  "auth": {
+    "login": {
+      "title": "Вхід в систему",
+      "email": "Електронна пошта",
+      "password": "Пароль",
+      "submit": "Увійти",
+      "error": "Невірний email або пароль"
+    }
+  },
+  "nav": {
+    "dashboard": "Панель управління",
+    "products": "Товари",
+    "categories": "Категорії",
+    "reviews": "Ревю AI",
+    "users": "Користувачі",
+    "import": "Імпорт",
+    "settings": "Налаштування"
+  },
+  "dashboard": {
+    "title": "Панель управління",
+    "stats": {
+      "total": "Товарів",
+      "in_stock": "В наявності",
+      "enriched": "Збагачено",
+      "pending_reviews": "Очікують ревю",
+      "no_description": "Без опису"
+    },
+    "import": {
+      "title": "Імпорт",
+      "trigger": "Запустити імпорт",
+      "last": "Останній імпорт"
+    },
+    "ai": {
+      "title": "AI задачі",
+      "today": "Сьогодні"
+    }
+  },
+  "products": {
+    "title": "Товари",
+    "search": "Пошук за назвою, SKU...",
+    "filters": {
+      "category": "Категорія",
+      "in_stock": "Наявність",
+      "enrichment": "Збагачення",
+      "review": "Ревю",
+      "all": "Всі",
+      "in_stock_yes": "В наявності",
+      "in_stock_no": "Немає",
+      "enrichment_none": "Пусто",
+      "enrichment_partial": "Частково",
+      "enrichment_full": "Повністю",
+      "reset": "Скинути"
+    },
+    "table": {
+      "name": "Назва",
+      "sku": "SKU",
+      "category": "Категорія",
+      "price": "Ціна",
+      "in_stock": "Наявність",
+      "enrichment": "Збагачення"
+    },
+    "empty": {
+      "title": "Каталог порожній",
+      "description": "Товарів ще немає. Запустіть імпорт, щоб додати товари.",
+      "filtered_title": "Нічого не знайдено",
+      "filtered_action": "Скинути фільтри"
+    }
+  },
+  "product": {
+    "tabs": {
+      "main": "Основне",
+      "images": "Зображення",
+      "ai": "AI",
+      "attributes": "Характеристики"
+    },
+    "buf": {
+      "title": "Дані BUF",
+      "name": "Назва",
+      "brand": "Бренд",
+      "country": "Країна",
+      "price": "Ціна",
+      "quantity": "Кількість",
+      "sku": "SKU",
+      "code": "Внутрішній код",
+      "uktzed": "УКТЗЕД"
+    },
+    "enriched": {
+      "title": "Збагачені дані",
+      "name_placeholder": "Введіть назву",
+      "brand_placeholder": "Введіть бренд",
+      "country_placeholder": "Введіть країну",
+      "category_placeholder": "Оберіть категорію",
+      "category_hint": "Залиште порожнім для оригінальної категорії з BUF",
+      "description": "Опис",
+      "seo_title": "SEO заголовок",
+      "seo_description": "SEO опис",
+      "save": "Зберегти",
+      "reset": "Скинути до оригіналу",
+      "reset_field": "Скинути"
+    },
+    "images": {
+      "title": "Зображення",
+      "empty": "Немає зображень",
+      "upload": "Завантажити",
+      "generate_ai": "Згенерувати AI",
+      "primary": "Головне"
+    },
+    "ai": {
+      "title": "AI",
+      "enrich": "Збагатити AI",
+      "pending_review": "Є незатверджені зміни від AI. Перегляньте в розділі Ревю.",
+      "history": "Історія AI задач буде тут"
+    },
+    "attributes": {
+      "title": "Характеристики",
+      "key": "Назва",
+      "value": "Значення",
+      "source": "Джерело",
+      "add": "Додати характеристику",
+      "add_title": "Нова характеристика",
+      "edit_title": "Редагувати характеристику",
+      "delete_title": "Видалити характеристику?",
+      "key_placeholder": "Напр. Потужність",
+      "value_placeholder": "Напр. 780 Вт",
+      "created": "Характеристику додано",
+      "deleted": "Характеристику видалено",
+      "error_duplicate": "Характеристика з такою назвою вже існує",
+      "empty": "Характеристик поки немає"
+    },
+    "info": {
+      "category": "Категорія",
+      "sku": "SKU",
+      "code": "Внутрішній код",
+      "uktzed": "УКТЗЕД",
+      "price": "Ціна",
+      "in_stock": "Наявність"
+    },
+    "badges": {
+      "in_stock": "В наявності",
+      "out_of_stock": "Немає в наявності",
+      "enrichment_none": "Без опису",
+      "enrichment_partial": "Частково збагачено",
+      "enrichment_full": "Повністю збагачено",
+      "pending_review": "Очікує ревю"
+    }
+  },
+  "categories": {
+    "title": "Категорії",
+    "search": "Пошук категорії...",
+    "empty": "Категорії відсутні",
+    "products_count": "товарів",
+    "rename": "Перейменувати",
+    "rename_title": "Перейменувати категорію",
+    "edit_title": "Редагувати категорію",
+    "add": "Додати категорію",
+    "created": "Категорію створено",
+    "name": "Назва",
+    "name_placeholder": "Введіть назву категорії",
+    "parent": "Батьківська категорія",
+    "no_parent": "Коренева (без батьківської)",
+    "parent_hint": "Залиште порожнім для кореневої категорії",
+    "bulk_enrich": "Bulk збагатити"
+  },
+  "reviews": {
+    "title": "Ревю AI",
+    "filters": {
+      "status": "Статус",
+      "all": "Всі",
+      "status_pending": "Очікує",
+      "status_approved": "Прийнято",
+      "status_rejected": "Відхилено",
+      "status_partial": "Частково"
+    },
+    "status": {
+      "pending": "Очікує",
+      "approved": "Прийнято",
+      "rejected": "Відхилено",
+      "partial": "Частково"
+    },
+    "table": {
+      "product": "Товар",
+      "type": "Тип",
+      "provider": "Провайдер",
+      "status": "Статус",
+      "date": "Дата"
+    },
+    "empty": {
+      "title": "Немає очікуючих ревю",
+      "description": "Всі AI-пропозиції оброблені"
+    },
+    "type": {
+      "text": "Текст",
+      "image": "Зображення"
+    }
+  },
+  "review": {
+    "breadcrumb": "Ревю AI",
+    "current": "Поточне",
+    "proposed": "Пропозиція AI",
+    "approve_all": "Прийняти все",
+    "reject": "Відхилити",
+    "info": {
+      "provider": "Провайдер",
+      "cost": "Вартість",
+      "duration": "Тривалість",
+      "date": "Дата"
+    },
+    "diff": {
+      "no_changes": "Немає відмінностей"
+    },
+    "image_preview": "Згенероване зображення"
+  },
+  "users": {
+    "title": "Користувачі",
+    "invite": "Запросити",
+    "table": {
+      "name": "Ім'я",
+      "email": "Email",
+      "role": "Роль",
+      "status": "Статус",
+      "created": "Дата створення",
+      "actions": "Дії"
+    },
+    "form": {
+      "email": "Email",
+      "name": "Ім'я",
+      "password": "Пароль",
+      "password_placeholder": "Залиште порожнім",
+      "role": "Роль",
+      "create": "Створити",
+      "edit_title": "Редагувати користувача",
+      "create_title": "Новий користувач"
+    },
+    "deactivate": {
+      "title": "Деактивувати {{name}}?",
+      "description": "Користувач втратить доступ до системи. Цю дію можна скасувати.",
+      "confirm": "Деактивувати"
+    },
+    "empty": {
+      "title": "Поки тільки ви",
+      "action": "Запросити користувача"
+    },
+    "status": {
+      "active": "Активний",
+      "inactive": "Неактивний"
+    },
+    "roles": {
+      "admin": "Адміністратор",
+      "operator": "Оператор",
+      "manager": "Менеджер",
+      "viewer": "Читач"
+    }
+  },
+  "import": {
+    "title": "Імпорт",
+    "trigger": {
+      "title": "Запуск імпорту",
+      "description": "XML файли зчитуються з папки inbox/",
+      "button": "Запустити імпорт",
+      "loading": "Імпорт виконується...",
+      "success": "Імпорт завершено"
+    },
+    "logs": {
+      "title": "Історія імпортів",
+      "date": "Дата",
+      "file": "Файл",
+      "status": "Статус",
+      "created": "Створено",
+      "updated": "Оновлено",
+      "errors": "Помилки",
+      "error_details": "Деталі помилок"
+    },
+    "status": {
+      "completed": "Завершено",
+      "failed": "Помилка",
+      "running": "Виконується"
+    },
+    "empty": {
+      "title": "Імпортів ще не було",
+      "action": "Запустити перший імпорт"
+    }
+  },
+  "settings": {
+    "title": "Налаштування",
+    "ai": {
+      "title": "AI провайдери",
+      "text_provider": "Текстовий провайдер",
+      "image_provider": "Генерація зображень",
+      "fallback_info": "Fallback автоматичний при недоступності провайдера",
+      "save": "Зберегти"
+    },
+    "export": {
+      "title": "XML Експорт",
+      "products_url": "URL товарів",
+      "categories_url": "URL категорій",
+      "copy": "Копіювати",
+      "copied": "Скопійовано",
+      "stats": "{{products}} товарів, {{categories}} категорій в експорті"
+    },
+    "profile": {
+      "title": "Профіль",
+      "name": "Ім'я",
+      "email": "Email",
+      "new_password": "Новий пароль",
+      "current_password": "Поточний пароль",
+      "save": "Зберегти"
+    }
+  },
+  "error": {
+    "404": {
+      "title": "404",
+      "text": "Сторінку не знайдено"
+    },
+    "500": {
+      "title": "500",
+      "text": "Щось пішло не так"
+    }
+  }
+}
