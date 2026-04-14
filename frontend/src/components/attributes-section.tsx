@@ -37,7 +37,7 @@ import { showSuccess, showError } from '@/lib/toast';
 import type { ProductAttribute } from '@/types/api';
 
 interface Props {
-  productId: number;
+  productId: string;
   canEdit: boolean;
 }
 
@@ -85,7 +85,7 @@ export function AttributesSection({ productId, canEdit }: Props) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, key, value }: { id: number; key: string; value: string }) => {
+    mutationFn: async ({ id, key, value }: { id: string; key: string; value: string }) => {
       const response = await apiClient.patch(
         `/api/products/${productId}/attributes/${id}`,
         { key, value },
@@ -100,7 +100,7 @@ export function AttributesSection({ productId, canEdit }: Props) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (id: string) => {
       await apiClient.delete(`/api/products/${productId}/attributes/${id}`);
     },
     onSuccess: () => {

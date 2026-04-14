@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { Fragment, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
@@ -30,21 +30,41 @@ import {
 } from '@/components/ui/table';
 import { PageHeader } from '@/components/page-header';
 import { EmptyState } from '@/components/empty-state';
+import axios from 'axios';
 import { apiClient } from '@/lib/api-client';
-import { showSuccess } from '@/lib/toast';
+import { showSuccess, showError } from '@/lib/toast';
 import { useAuthStore } from '@/stores/auth-store';
 import type { PaginatedResponse } from '@/types/api';
 
 interface ImportLogEntry {
-  id: number;
-  filename: string;
+  id: string;
+  file_name: string;
   status: 'completed' | 'failed' | 'running';
   started_at: string;
-  completed_at: string | null;
+  finished_at: string | null;
   products_created: number;
   products_updated: number;
+  products_stock_changed: number;
+  categories_upserted: number;
   errors_count: number;
-  error_details: string[] | null;
+  error_details: Array<Record<string, unknown>> | null;
+}
+
+function formatErrorEntry(err: Record<string, unknown>): string {
+  const type = err.type as string | undefined;
+  const parts = Object.entries(err)
+    .filter(([k]) => k !== 'type')
+    .map(([k, v]) => `${k}=${typeof v === 'string' ? v : JSON.stringify(v)}`)
+    .join(', ');
+  return type ? `[${type}] ${parts}` : parts || JSON.stringify(err);
+}
+
+function extractApiError(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data as { error?: string } | undefined;
+    if (data?.error) return data.error;
+  }
+  return 'Сталася помилка';
 }
 
 function formatDate(dateStr: string): string {
@@ -80,7 +100,7 @@ export function ImportPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number(searchParams.get('page') ?? '1');
 
-  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   const setPage = useCallback(
     (newPage: number) => {
@@ -93,7 +113,7 @@ export function ImportPage() {
     [setSearchParams],
   );
 
-  const toggleRow = (id: number) => {
+  const toggleRow = (id: string) => {
     setExpandedRows((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -113,6 +133,10 @@ export function ImportPage() {
       );
       return response.data;
     },
+    refetchInterval: (query) => {
+      const logs = query.state.data?.data ?? [];
+      return logs.some((l) => l.status === 'running') ? 3000 : false;
+    },
   });
 
   const triggerMutation = useMutation({
@@ -124,6 +148,7 @@ export function ImportPage() {
       queryClient.invalidateQueries({ queryKey: ['import-logs'] });
       showSuccess(t('import.trigger.success'));
     },
+    onError: (err) => showError(extractApiError(err)),
   });
 
   return (
@@ -190,80 +215,76 @@ export function ImportPage() {
                     const hasErrors = log.errors_count > 0;
 
                     return (
-                      <TableRow
-                        key={log.id}
-                        className={hasErrors ? 'cursor-pointer' : ''}
-                        onClick={() => hasErrors && toggleRow(log.id)}
-                      >
-                        <TableCell>
-                          {hasErrors && (
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleRow(log.id);
-                              }}
-                            >
-                              {isExpanded ? (
-                                <ChevronUp className="h-3 w-3" />
-                              ) : (
-                                <ChevronDown className="h-3 w-3" />
-                              )}
-                            </Button>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {formatDate(log.started_at)}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {log.filename}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(log.status)}>
-                            {t(`import.status.${log.status}`)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{log.products_created}</TableCell>
-                        <TableCell>{log.products_updated}</TableCell>
-                        <TableCell>
-                          {log.errors_count > 0 ? (
-                            <Badge variant="destructive">
-                              {log.errors_count}
+                      <Fragment key={log.id}>
+                        <TableRow
+                          className={hasErrors ? 'cursor-pointer' : ''}
+                          onClick={() => hasErrors && toggleRow(log.id)}
+                        >
+                          <TableCell>
+                            {hasErrors && (
+                              <Button
+                                variant="ghost"
+                                size="icon-xs"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleRow(log.id);
+                                }}
+                              >
+                                {isExpanded ? (
+                                  <ChevronUp className="h-3 w-3" />
+                                ) : (
+                                  <ChevronDown className="h-3 w-3" />
+                                )}
+                              </Button>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {formatDate(log.started_at)}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {log.file_name}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusVariant(log.status)}>
+                              {t(`import.status.${log.status}`)}
                             </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">0</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
+                          </TableCell>
+                          <TableCell>{log.products_created}</TableCell>
+                          <TableCell>{log.products_updated}</TableCell>
+                          <TableCell>
+                            {log.errors_count > 0 ? (
+                              <Badge variant="destructive">
+                                {log.errors_count}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">0</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                        {isExpanded && log.error_details && (
+                          <TableRow>
+                            <TableCell colSpan={7} className="bg-destructive/5 p-3">
+                              <p className="mb-2 text-sm font-medium">
+                                {t('import.logs.error_details')}
+                              </p>
+                              <ul className="space-y-1">
+                                {log.error_details.map((err, i) => (
+                                  <li
+                                    key={i}
+                                    className="break-all font-mono text-xs text-destructive"
+                                  >
+                                    {formatErrorEntry(err)}
+                                  </li>
+                                ))}
+                              </ul>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </Fragment>
                     );
                   })}
                 </TableBody>
               </Table>
-
-              {/* Expanded error details rendered below */}
-              {data.data
-                .filter((log) => expandedRows.has(log.id) && log.error_details)
-                .map((log) => (
-                  <div
-                    key={`errors-${log.id}`}
-                    className="mt-2 rounded-lg border border-destructive/20 bg-destructive/5 p-3"
-                  >
-                    <p className="mb-2 text-sm font-medium">
-                      {t('import.logs.error_details')} — {log.filename}
-                    </p>
-                    <ul className="space-y-1">
-                      {log.error_details!.map((err, i) => (
-                        <li
-                          key={i}
-                          className="font-mono text-xs text-destructive"
-                        >
-                          {err}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
 
               {/* Pagination */}
               <div className="mt-4 flex items-center justify-between">

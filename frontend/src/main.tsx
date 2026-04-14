@@ -18,29 +18,17 @@ const queryClient = new QueryClient({
   },
 });
 
-async function enableMocking() {
-  if (import.meta.env.VITE_MSW_ENABLED !== 'true') {
-    return;
-  }
-  const { worker } = await import('@/mocks/browser');
-  return worker.start({
-    onUnhandledRequest: 'bypass',
-  });
-}
-
-enableMocking().then(() => {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <ErrorBoundary>
-        <BrowserRouter>
-          <QueryClientProvider client={queryClient}>
-            <TooltipProvider>
-              <App />
-              <Toaster position="bottom-right" richColors />
-            </TooltipProvider>
-          </QueryClientProvider>
-        </BrowserRouter>
-      </ErrorBoundary>
-    </StrictMode>,
-  );
-});
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <App />
+            <Toaster position="bottom-right" richColors />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
+  </StrictMode>,
+);

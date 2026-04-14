@@ -15,7 +15,7 @@
 | 3 | architect | completed | 2026-04-13 | Monolith, FastAPI+React, 8 tables, 42 endpoints |
 | 4 | design | completed | 2026-04-13 | 12 screens, design system, UI patterns |
 | 5 | frontend-skeleton | completed | 2026-04-14 | 12 screens, MSW mocks, auth, RBAC, permission-aware UI, i18n, dark mode |
-| 6 | developer | pending | — | — |
+| 6 | developer | in_progress | 2026-04-14 | — |
 | 7 | qa | pending | — | — |
 | 8 | performance | pending | — | — |
 | 9 | security | pending | — | — |

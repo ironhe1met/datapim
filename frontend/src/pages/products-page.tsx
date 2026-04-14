@@ -25,18 +25,21 @@ import {
 import { PageHeader } from '@/components/page-header';
 import { EmptyState } from '@/components/empty-state';
 import { apiClient } from '@/lib/api-client';
+import { resolveImageUrl } from '@/lib/utils';
 import type {
   PaginatedResponse,
   ProductListItem,
   Category,
 } from '@/types/api';
 
-function formatPrice(price: number | null, currency: string | null): string {
-  if (price === null) return '—';
+function formatPrice(price: number | string | null, currency: string | null): string {
+  if (price === null || price === undefined) return '—';
+  const num = typeof price === 'string' ? Number(price) : price;
+  if (Number.isNaN(num)) return '—';
   const formatted = new Intl.NumberFormat('uk-UA', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(price);
+  }).format(num);
   return `${formatted} ${currency === 'UAH' ? '₴' : (currency ?? '')}`;
 }
 
@@ -115,10 +118,10 @@ export function ProductsPage() {
   const { data: categoriesTree } = useQuery({
     queryKey: ['categories', 'tree'],
     queryFn: async () => {
-      const response = await apiClient.get<Category[]>(
+      const response = await apiClient.get<{ data: Category[] }>(
         '/api/categories?tree=true',
       );
-      return response.data;
+      return response.data.data;
     },
   });
 
@@ -273,6 +276,7 @@ export function ProductsPage() {
                 <TableHead>{t('products.table.name')}</TableHead>
                 <TableHead>{t('products.table.sku')}</TableHead>
                 <TableHead>{t('products.table.category')}</TableHead>
+                <TableHead className="text-right">Кількість</TableHead>
                 <TableHead>{t('products.table.price')}</TableHead>
                 <TableHead>{t('products.table.in_stock')}</TableHead>
                 <TableHead>{t('products.table.enrichment')}</TableHead>
@@ -290,7 +294,7 @@ export function ProductsPage() {
                       {product.primary_image ? (
                         <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded bg-muted">
                           <img
-                            src={product.primary_image.file_path}
+                            src={resolveImageUrl(product.primary_image.file_path)}
                             alt=""
                             className="h-full w-full object-cover"
                           />
@@ -307,6 +311,9 @@ export function ProductsPage() {
                     {product.sku}
                   </TableCell>
                   <TableCell>{product.category?.name ?? '—'}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {product.quantity ?? 0}
+                  </TableCell>
                   <TableCell>
                     {formatPrice(product.price, product.currency)}
                   </TableCell>

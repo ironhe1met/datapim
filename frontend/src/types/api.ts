@@ -1,7 +1,7 @@
 export type UserRole = 'admin' | 'operator' | 'manager' | 'viewer';
 
 export interface User {
-  id: number;
+  id: string;
   email: string;
   name: string;
   role: UserRole;
@@ -18,13 +18,14 @@ export interface LoginRequest {
 export interface LoginResponse {
   access_token: string;
   refresh_token: string;
+  token_type?: string;
   user: User;
 }
 
 export type EnrichmentStatus = 'none' | 'partial' | 'full';
 
 export interface Product {
-  id: number;
+  id: string;
   internal_code: string;
   sku: string;
   buf_name: string | null;
@@ -39,6 +40,7 @@ export interface Product {
   buf_in_stock: boolean;
   buf_quantity: number | null;
   category: Category | null;
+  buf_category: Category | null;
   primary_image: ProductImage | null;
   enrichment_status: EnrichmentStatus;
   has_pending_review: boolean;
@@ -54,12 +56,14 @@ export interface Product {
 }
 
 export interface ProductImage {
-  id: number;
+  id: string;
   file_path: string;
+  is_primary?: boolean;
+  sort_order?: number;
 }
 
 export interface ProductAttribute {
-  id: number;
+  id: string;
   key: string;
   value: string;
   source: 'manual' | 'ai';
@@ -67,25 +71,26 @@ export interface ProductAttribute {
 }
 
 export interface ProductListItem {
-  id: number;
+  id: string;
   internal_code: string;
   sku: string;
   name: string;
   brand: string | null;
   price: number | null;
   currency: string | null;
+  quantity: number | null;
   in_stock: boolean;
-  category: { id: number; name: string } | null;
-  primary_image: { id: number; file_path: string } | null;
+  category: { id: string; name: string } | null;
+  primary_image: { id: string; file_path: string } | null;
   enrichment_status: EnrichmentStatus;
   has_pending_review: boolean;
 }
 
 export interface Category {
-  id: number;
+  id: string;
   external_id: string | null;
   name: string;
-  parent_id: number | null;
+  parent_id: string | null;
   is_active: boolean;
   product_count: number;
   children?: Category[];
@@ -175,6 +180,14 @@ export interface ApiError {
   request_id: string;
 }
 
+export interface LastImportInfo {
+  id: string;
+  date: string;
+  status: string;
+  products_created: number;
+  products_updated: number;
+}
+
 export interface DashboardStats {
   products_total: number;
   products_in_stock: number;
@@ -183,7 +196,6 @@ export interface DashboardStats {
   products_with_images: number;
   pending_reviews: number;
   categories_total: number;
-  last_import: string | null;
+  last_import: LastImportInfo | null;
   ai_tasks_today: number;
-  ai_tasks_completed_today: number;
 }

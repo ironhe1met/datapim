@@ -3,11 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
 import { useEffect } from 'react';
+import { useRef } from 'react';
 import {
   Sparkles,
   ImagePlus,
   Upload,
   ArrowLeft,
+  Trash2,
+  Star,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,17 +49,34 @@ import {
 } from '@/components/ui/select';
 import { EmptyState } from '@/components/empty-state';
 import { AttributesSection } from '@/components/attributes-section';
+import axios from 'axios';
 import { apiClient } from '@/lib/api-client';
-import { showSuccess } from '@/lib/toast';
+import { resolveImageUrl } from '@/lib/utils';
+import { showSuccess, showError } from '@/lib/toast';
+
+function extractApiError(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data as
+      | { error?: string; details?: Array<{ msg?: string }> }
+      | undefined;
+    if (data?.details?.length) {
+      return data.details.map((d) => d.msg).filter(Boolean).join('; ');
+    }
+    if (data?.error) return data.error;
+  }
+  return 'Сталася помилка';
+}
 import { useAuthStore } from '@/stores/auth-store';
 import type { Product, Category } from '@/types/api';
 
-function formatPrice(price: number | null, currency: string | null): string {
-  if (price === null) return '—';
+function formatPrice(price: number | string | null, currency: string | null): string {
+  if (price === null || price === undefined) return '—';
+  const num = typeof price === 'string' ? Number(price) : price;
+  if (Number.isNaN(num)) return '—';
   const formatted = new Intl.NumberFormat('uk-UA', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(price);
+  }).format(num);
   return `${formatted} ${currency === 'UAH' ? '₴' : (currency ?? '')}`;
 }
 
@@ -94,13 +114,16 @@ export function ProductDetailPage() {
   const { hasRole } = useAuthStore();
 
   const canEdit = hasRole(['admin', 'operator']);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch categories for the select
   const { data: categoriesData } = useQuery({
     queryKey: ['categories-flat'],
     queryFn: async () => {
-      const response = await apiClient.get<Category[]>('/api/categories');
-      return response.data;
+      const response = await apiClient.get<{ data: Category[] }>(
+        '/api/categories?per_page=500',
+      );
+      return response.data.data;
     },
   });
 
@@ -131,7 +154,7 @@ export function ProductDetailPage() {
         custom_name: product.custom_name ?? '',
         custom_brand: product.custom_brand ?? '',
         custom_country: (product as unknown as ProductExtended).custom_country ?? '',
-        custom_category_id: '',
+        custom_category_id: product.category?.id ?? '',
         description: product.description ?? '',
         seo_title: product.seo_title ?? '',
         seo_description: product.seo_description ?? '',
@@ -141,15 +164,19 @@ export function ProductDetailPage() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: EnrichedFormData) => {
-      const response = await apiClient.patch<Product>(`/api/products/${id}`, {
+      const payload: Record<string, string | null> = {
         custom_name: data.custom_name || null,
         custom_brand: data.custom_brand || null,
         custom_country: data.custom_country || null,
-        custom_category_id: data.custom_category_id || null,
         description: data.description || null,
         seo_title: data.seo_title || null,
         seo_description: data.seo_description || null,
-      });
+      };
+      // Only include category if user picked a different one (backend rejects null)
+      if (data.custom_category_id && data.custom_category_id !== product?.category?.id) {
+        payload.custom_category_id = data.custom_category_id;
+      }
+      const response = await apiClient.patch<Product>(`/api/products/${id}`, payload);
       return response.data;
     },
     onSuccess: () => {
@@ -157,6 +184,7 @@ export function ProductDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       showSuccess(t('common.save') + ' ✓');
     },
+    onError: (err) => showError(extractApiError(err)),
   });
 
   const resetFieldMutation = useMutation({
@@ -172,6 +200,49 @@ export function ProductDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       showSuccess(t('product.enriched.reset') + ' ✓');
     },
+    onError: (err) => showError(extractApiError(err)),
+  });
+
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await apiClient.post(
+        `/api/products/${id}/images`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product', id] });
+      showSuccess('Зображення завантажено');
+    },
+    onError: (err) => showError(extractApiError(err)),
+  });
+
+  const deleteImageMutation = useMutation({
+    mutationFn: async (imageId: string) => {
+      await apiClient.delete(`/api/products/${id}/images/${imageId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product', id] });
+      showSuccess('Зображення видалено');
+    },
+    onError: (err) => showError(extractApiError(err)),
+  });
+
+  const setPrimaryMutation = useMutation({
+    mutationFn: async (imageId: string) => {
+      await apiClient.patch(`/api/products/${id}/images/${imageId}`, {
+        is_primary: true,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product', id] });
+      showSuccess('Головне зображення оновлено');
+    },
+    onError: (err) => showError(extractApiError(err)),
   });
 
   const onSubmit = (data: EnrichedFormData) => {
@@ -284,6 +355,21 @@ export function ProductDetailPage() {
                       <dd className="text-sm">{ext.buf_country ?? '—'}</dd>
                     </div>
                     <div>
+                      <dt className="text-xs text-muted-foreground">{t('product.buf.category')}</dt>
+                      <dd className="text-sm">
+                        {product.buf_category ? (
+                          <Link
+                            to={`/products?category_id=${product.buf_category.id}`}
+                            className="text-primary hover:underline"
+                          >
+                            {product.buf_category.name}
+                          </Link>
+                        ) : (
+                          '—'
+                        )}
+                      </dd>
+                    </div>
+                    <div>
                       <dt className="text-xs text-muted-foreground">{t('product.buf.code')}</dt>
                       <dd className="font-mono text-sm">{product.internal_code}</dd>
                     </div>
@@ -311,16 +397,6 @@ export function ProductDetailPage() {
                         ) : (
                           <Badge variant="secondary">{t('product.badges.out_of_stock')}</Badge>
                         )}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.info.category')}</dt>
-                      <dd className="text-sm">
-                        {product.category ? (
-                          <Link to={`/products?category_id=${product.category.id}`} className="text-primary hover:underline">
-                            {product.category.name}
-                          </Link>
-                        ) : '—'}
                       </dd>
                     </div>
                   </dl>
@@ -362,9 +438,9 @@ export function ProductDetailPage() {
                         control={form.control}
                         name="custom_category_id"
                         render={({ field }) => {
-                          const selectedCat = (categoriesData ?? []).find((c) => String(c.id) === field.value);
+                          const selectedCat = (categoriesData ?? []).find((c) => c.id === field.value);
                           return (
-                            <Select value={field.value || '__none__'} onValueChange={(val) => field.onChange(val === '__none__' ? '' : (val ?? ''))}>
+                            <Select value={field.value || ''} onValueChange={(val) => field.onChange(val ?? '')}>
                               <SelectTrigger>
                                 <SelectValue>
                                   {selectedCat
@@ -373,11 +449,8 @@ export function ProductDetailPage() {
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="__none__">
-                                  {product.category ? `${product.category.name} (оригінал)` : t('product.enriched.category_placeholder')}
-                                </SelectItem>
                                 {(categoriesData ?? []).map((cat) => (
-                                  <SelectItem key={String(cat.id)} value={String(cat.id)}>
+                                  <SelectItem key={cat.id} value={cat.id}>
                                     {cat.name}
                                   </SelectItem>
                                 ))}
@@ -405,7 +478,7 @@ export function ProductDetailPage() {
 
                     {/* Attributes inside enriched card */}
                     <Separator className="my-4" />
-                    <AttributesSection productId={Number(id)} canEdit={canEdit} />
+                    <AttributesSection productId={id!} canEdit={canEdit} />
 
                     <Separator className="my-4" />
 
@@ -464,7 +537,7 @@ export function ProductDetailPage() {
                     </div>
                   </dl>
                   <Separator className="my-4" />
-                  <AttributesSection productId={Number(id)} canEdit={false} />
+                  <AttributesSection productId={id!} canEdit={false} />
                 </CardContent>
               </Card>
             )}
@@ -526,37 +599,71 @@ export function ProductDetailPage() {
           <div>
             {product.images.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {product.images.map((img, idx) => (
+                {product.images.map((img) => (
                   <div
                     key={img.id}
-                    className="relative overflow-hidden rounded-lg border bg-muted"
+                    className="group relative overflow-hidden rounded-lg border bg-muted"
                   >
                     <img
-                      src={img.file_path}
+                      src={resolveImageUrl(img.file_path)}
                       alt=""
                       className="aspect-square w-full object-cover"
                     />
-                    {idx === 0 && (
+                    {img.is_primary && (
                       <Badge className="absolute left-2 top-2" variant="default">
                         {t('product.images.primary')}
                       </Badge>
+                    )}
+                    {canEdit && (
+                      <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                        {!img.is_primary && (
+                          <Button
+                            size="icon-sm"
+                            variant="secondary"
+                            title="Зробити головним"
+                            onClick={() => setPrimaryMutation.mutate(img.id)}
+                          >
+                            <Star className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button
+                          size="icon-sm"
+                          variant="destructive"
+                          title="Видалити"
+                          onClick={() => deleteImageMutation.mutate(img.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <EmptyState
-                icon={ImagePlus}
-                title={t('product.images.empty')}
-              />
+              <EmptyState icon={ImagePlus} title={t('product.images.empty')} />
             )}
             {canEdit && (
               <div className="mt-4 flex gap-2">
-                <Button variant="outline">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadImageMutation.mutate(file);
+                    e.target.value = '';
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadImageMutation.isPending}
+                >
                   <Upload className="mr-2 h-4 w-4" />
                   {t('product.images.upload')}
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" disabled title="v1.2+">
                   <Sparkles className="mr-2 h-4 w-4" />
                   {t('product.images.generate_ai')}
                 </Button>

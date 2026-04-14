@@ -90,6 +90,7 @@
       "name": "Назва",
       "brand": "Бренд",
       "country": "Країна",
+      "category": "Категорія",
       "price": "Ціна",
       "quantity": "Кількість",
       "sku": "SKU",

@@ -33,8 +33,22 @@ import {
 } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/page-header';
 import { EmptyState } from '@/components/empty-state';
+import axios from 'axios';
 import { apiClient } from '@/lib/api-client';
-import { showSuccess } from '@/lib/toast';
+import { showSuccess, showError } from '@/lib/toast';
+
+function extractApiError(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data as
+      | { error?: string; details?: Array<{ msg?: string }> }
+      | undefined;
+    if (data?.details?.length) {
+      return data.details.map((d) => d.msg).filter(Boolean).join('; ');
+    }
+    if (data?.error) return data.error;
+  }
+  return 'Сталася помилка';
+}
 import { useAuthStore } from '@/stores/auth-store';
 import type { Category } from '@/types/api';
 
@@ -53,12 +67,12 @@ function flattenCategories(cats: Category[], level = 0): Array<Category & { leve
 interface CategoryNodeProps {
   category: Category;
   level: number;
-  expandedIds: Set<number>;
-  onToggle: (id: number) => void;
+  expandedIds: Set<string>;
+  onToggle: (id: string) => void;
   searchQuery: string;
   canEdit: boolean;
   isAdmin: boolean;
-  onNavigate: (categoryId: number) => void;
+  onNavigate: (categoryId: string) => void;
   onEdit: (category: Category) => void;
   t: (key: string) => string;
 }
@@ -76,7 +90,7 @@ function CategoryNode({
   t,
 }: CategoryNodeProps) {
   const hasChildren = category.children && category.children.length > 0;
-  const isExpanded = expandedIds.has(category.id as number);
+  const isExpanded = expandedIds.has(category.id);
 
   const matchesSearch =
     !searchQuery ||
@@ -101,7 +115,7 @@ function CategoryNode({
         <button
           type="button"
           className="flex h-5 w-5 shrink-0 items-center justify-center"
-          onClick={() => hasChildren && onToggle(category.id as number)}
+          onClick={() => hasChildren && onToggle(category.id)}
         >
           {hasChildren ? (
             isExpanded ? (
@@ -117,7 +131,7 @@ function CategoryNode({
         <button
           type="button"
           className="flex-1 text-left text-sm font-medium hover:text-primary"
-          onClick={() => onNavigate(category.id as number)}
+          onClick={() => onNavigate(category.id)}
         >
           {category.name}
         </button>
@@ -148,7 +162,7 @@ function CategoryNode({
         <div>
           {category.children!.map((child) => (
             <CategoryNode
-              key={child.id as number}
+              key={child.id}
               category={child}
               level={level + 1}
               expandedIds={expandedIds}
@@ -173,7 +187,7 @@ export function CategoriesPage() {
   const queryClient = useQueryClient();
   const { hasRole } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   // Dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -188,8 +202,11 @@ export function CategoriesPage() {
   const { data: categories, isLoading } = useQuery({
     queryKey: ['categories', 'tree'],
     queryFn: async () => {
-      const response = await apiClient.get<Category[]>('/api/categories?tree=true');
-      return response.data;
+      const response = await apiClient.get<{ data: Category[] }>('/api/categories?tree=true');
+      // Hide empty root subtrees (no products + no children — e.g. "Удалённые" after BUF filter).
+      return response.data.data.filter(
+        (r) => r.product_count > 0 || (r.children && r.children.length > 0),
+      );
     },
   });
 
@@ -199,7 +216,7 @@ export function CategoriesPage() {
   }, [categories]);
 
   const createMutation = useMutation({
-    mutationFn: async (data: { name: string; parent_id: number | null }) => {
+    mutationFn: async (data: { name: string; parent_id: string | null }) => {
       const response = await apiClient.post('/api/categories', data);
       return response.data;
     },
@@ -208,10 +225,11 @@ export function CategoriesPage() {
       showSuccess(t('categories.created'));
       setCreateDialogOpen(false);
     },
+    onError: (err) => showError(extractApiError(err)),
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: { id: number; name: string; parent_id: number | null }) => {
+    mutationFn: async (data: { id: string; name: string; parent_id: string | null }) => {
       const response = await apiClient.patch(`/api/categories/${data.id}`, {
         name: data.name,
         parent_id: data.parent_id,
@@ -223,9 +241,10 @@ export function CategoriesPage() {
       showSuccess(t('common.save') + ' ✓');
       setEditDialogOpen(false);
     },
+    onError: (err) => showError(extractApiError(err)),
   });
 
-  const toggleExpanded = (id: number) => {
+  const toggleExpanded = (id: string) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -234,14 +253,14 @@ export function CategoriesPage() {
     });
   };
 
-  const handleNavigate = (categoryId: number) => {
+  const handleNavigate = (categoryId: string) => {
     navigate(`/products?category_id=${categoryId}`);
   };
 
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
     setDialogName(category.name);
-    setDialogParentId(category.parent_id ? String(category.parent_id) : '__none__');
+    setDialogParentId(category.parent_id ?? '__none__');
     setEditDialogOpen(true);
   };
 
@@ -254,9 +273,9 @@ export function CategoriesPage() {
   const handleSaveEdit = () => {
     if (!editingCategory || !dialogName.trim()) return;
     updateMutation.mutate({
-      id: editingCategory.id as number,
+      id: editingCategory.id,
       name: dialogName.trim(),
-      parent_id: dialogParentId === '__none__' ? null : Number(dialogParentId),
+      parent_id: dialogParentId === '__none__' ? null : dialogParentId,
     });
   };
 
@@ -264,7 +283,7 @@ export function CategoriesPage() {
     if (!dialogName.trim()) return;
     createMutation.mutate({
       name: dialogName.trim(),
-      parent_id: dialogParentId === '__none__' ? null : Number(dialogParentId),
+      parent_id: dialogParentId === '__none__' ? null : dialogParentId,
     });
   };
 
@@ -276,19 +295,19 @@ export function CategoriesPage() {
       if (cat.children?.some((child) =>
         child.name.toLowerCase().includes(searchQuery.toLowerCase()),
       )) {
-        expanded.add(cat.id as number);
+        expanded.add(cat.id);
       }
     }
     return expanded;
   }, [searchQuery, categories, expandedIds]);
 
-  const parentSelectContent = (excludeId?: number) => (
+  const parentSelectContent = (excludeId?: string) => (
     <SelectContent>
       <SelectItem value="__none__">{t('categories.no_parent')}</SelectItem>
       {flatCats
-        .filter((c) => (c.id as number) !== excludeId)
+        .filter((c) => c.id !== excludeId)
         .map((cat) => (
-          <SelectItem key={cat.id as number} value={String(cat.id)}>
+          <SelectItem key={cat.id} value={cat.id}>
             {'—'.repeat(cat.level)} {cat.name}
           </SelectItem>
         ))}
@@ -328,7 +347,7 @@ export function CategoriesPage() {
         <div className="rounded-lg border">
           {categories.map((cat) => (
             <CategoryNode
-              key={cat.id as number}
+              key={cat.id}
               category={cat}
               level={0}
               expandedIds={effectiveExpandedIds}
@@ -367,10 +386,10 @@ export function CategoriesPage() {
                   <SelectValue>
                     {dialogParentId === '__none__'
                       ? t('categories.no_parent')
-                      : flatCats.find((c) => String(c.id) === dialogParentId)?.name ?? t('categories.parent')}
+                      : flatCats.find((c) => c.id === dialogParentId)?.name ?? t('categories.parent')}
                   </SelectValue>
                 </SelectTrigger>
-                {parentSelectContent(editingCategory?.id as number)}
+                {parentSelectContent(editingCategory?.id)}
               </Select>
             </div>
           </div>
@@ -407,7 +426,7 @@ export function CategoriesPage() {
                   <SelectValue>
                     {dialogParentId === '__none__'
                       ? t('categories.no_parent')
-                      : flatCats.find((c) => String(c.id) === dialogParentId)?.name ?? t('categories.parent')}
+                      : flatCats.find((c) => c.id === dialogParentId)?.name ?? t('categories.parent')}
                   </SelectValue>
                 </SelectTrigger>
                 {parentSelectContent()}

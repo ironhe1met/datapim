@@ -23,8 +23,14 @@ import {
 } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
 import { apiClient } from '@/lib/api-client';
+import { env } from '@/lib/env';
 import { showSuccess } from '@/lib/toast';
 import { useAuthStore } from '@/stores/auth-store';
+
+function absoluteUrl(path: string): string {
+  if (/^https?:\/\//.test(path)) return path;
+  return `${env.VITE_API_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+}
 
 type TextProvider = 'anthropic' | 'openai' | 'google';
 type ImageProvider = 'flux_pro' | 'dall_e_3' | 'imagen_3';
@@ -204,7 +210,7 @@ export function SettingsPage() {
               <Label>{t('settings.export.products_url')}</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  value={exportSettings?.products_url ?? '/export/products.xml'}
+                  value={absoluteUrl(exportSettings?.products_url ?? '/export/products.xml')}
                   readOnly
                   disabled
                   className="flex-1"
@@ -214,7 +220,7 @@ export function SettingsPage() {
                   size="icon"
                   onClick={() =>
                     handleCopy(
-                      exportSettings?.products_url ?? '/export/products.xml',
+                      absoluteUrl(exportSettings?.products_url ?? '/export/products.xml'),
                     )
                   }
                 >
@@ -226,9 +232,9 @@ export function SettingsPage() {
               <Label>{t('settings.export.categories_url')}</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  value={
-                    exportSettings?.categories_url ?? '/export/categories.xml'
-                  }
+                  value={absoluteUrl(
+                    exportSettings?.categories_url ?? '/export/categories.xml',
+                  )}
                   readOnly
                   disabled
                   className="flex-1"
@@ -238,8 +244,9 @@ export function SettingsPage() {
                   size="icon"
                   onClick={() =>
                     handleCopy(
-                      exportSettings?.categories_url ??
-                        '/export/categories.xml',
+                      absoluteUrl(
+                        exportSettings?.categories_url ?? '/export/categories.xml',
+                      ),
                     )
                   }
                 >

@@ -45,8 +45,9 @@ import {
 } from '@/components/ui/table';
 import { PageHeader } from '@/components/page-header';
 import { EmptyState } from '@/components/empty-state';
+import axios from 'axios';
 import { apiClient } from '@/lib/api-client';
-import { showSuccess } from '@/lib/toast';
+import { showSuccess, showError } from '@/lib/toast';
 import { useAuthStore } from '@/stores/auth-store';
 import type { PaginatedResponse, User, UserRole } from '@/types/api';
 
@@ -59,24 +60,40 @@ function formatDate(dateStr: string): string {
 }
 
 const createUserSchema = z.object({
-  email: z.email(),
-  name: z.string().min(1),
-  password: z.string().min(4),
+  email: z.email({ message: 'Некоректний email' }),
+  name: z.string().min(1, 'Вкажіть ім’я'),
+  password: z.string().min(8, 'Пароль має бути не менше 8 символів'),
   role: z.enum(['admin', 'operator', 'manager', 'viewer']),
 });
 
 type CreateUserValues = z.infer<typeof createUserSchema>;
 
 const editUserSchema = z.object({
-  email: z.email(),
-  name: z.string().min(1),
-  password: z.string().optional(),
+  email: z.email({ message: 'Некоректний email' }),
+  name: z.string().min(1, 'Вкажіть ім’я'),
+  password: z
+    .string()
+    .optional()
+    .refine((v) => !v || v.length >= 8, 'Пароль має бути не менше 8 символів'),
   role: z.enum(['admin', 'operator', 'manager', 'viewer']),
 });
 
 type EditUserValues = z.infer<typeof editUserSchema>;
 
 const ROLES: UserRole[] = ['admin', 'operator', 'manager', 'viewer'];
+
+function extractApiError(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data as
+      | { error?: string; details?: Array<{ msg?: string; loc?: string }> }
+      | undefined;
+    if (data?.details?.length) {
+      return data.details.map((d) => d.msg).filter(Boolean).join('; ');
+    }
+    if (data?.error) return data.error;
+  }
+  return 'Сталася помилка';
+}
 
 export function UsersPage() {
   const { t } = useTranslation();
@@ -133,10 +150,11 @@ export function UsersPage() {
       setCreateDialogOpen(false);
       createForm.reset();
     },
+    onError: (err) => showError(extractApiError(err)),
   });
 
   const editMutation = useMutation({
-    mutationFn: async (values: EditUserValues & { id: number }) => {
+    mutationFn: async (values: EditUserValues & { id: string }) => {
       const { id, ...body } = values;
       const response = await apiClient.patch(`/api/users/${id}`, body);
       return response.data;
@@ -147,10 +165,11 @@ export function UsersPage() {
       setEditDialogOpen(false);
       setEditingUser(null);
     },
+    onError: (err) => showError(extractApiError(err)),
   });
 
   const deactivateMutation = useMutation({
-    mutationFn: async (userId: number) => {
+    mutationFn: async (userId: string) => {
       const response = await apiClient.delete(`/api/users/${userId}`);
       return response.data;
     },
@@ -160,6 +179,7 @@ export function UsersPage() {
       setDeactivateDialogOpen(false);
       setDeactivatingUser(null);
     },
+    onError: (err) => showError(extractApiError(err)),
   });
 
   const handleOpenCreate = () => {
@@ -340,9 +360,13 @@ export function UsersPage() {
                 {...createForm.register('password')}
                 aria-invalid={!!createForm.formState.errors.password}
               />
-              {createForm.formState.errors.password && (
+              {createForm.formState.errors.password ? (
                 <p className="text-sm text-destructive">
                   {createForm.formState.errors.password.message}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Мінімум 8 символів
                 </p>
               )}
             </div>
@@ -424,7 +448,17 @@ export function UsersPage() {
                 type="password"
                 placeholder={t('users.form.password_placeholder')}
                 {...editForm.register('password')}
+                aria-invalid={!!editForm.formState.errors.password}
               />
+              {editForm.formState.errors.password ? (
+                <p className="text-sm text-destructive">
+                  {editForm.formState.errors.password.message}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Залиш порожнім, щоб не змінювати. Мінімум 8 символів.
+                </p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>{t('users.form.role')}</Label>
