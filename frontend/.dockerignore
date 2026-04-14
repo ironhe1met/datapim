@@ -1,0 +1,24 @@
+# Always rebuilt inside the image
+node_modules
+dist
+build
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
+
+# VCS
+.git
+.gitignore
+
+# Editor / OS
+.idea
+.vscode
+.DS_Store
+
+# Logs / caches
+*.log
+.eslintcache
+.cache
+coverage

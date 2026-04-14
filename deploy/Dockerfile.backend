@@ -1,0 +1,87 @@
+# syntax=docker/dockerfile:1.7
+# DataPIM backend — production image
+# Multi-stage build:
+#   builder — installs deps into a venv at /opt/venv
+#   runtime — copies venv + app, drops to non-root user
+#
+# Build:   docker build -f deploy/Dockerfile.backend -t datapim-backend:prod backend
+# (build context = backend/ so Dockerfile sees requirements.txt and app/)
+
+# ----------------------------------------------------------------------------
+# Stage 1: builder
+# ----------------------------------------------------------------------------
+FROM python:3.12-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Build deps for compiling C extensions (asyncpg, bcrypt, lxml, cryptography)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        libpq-dev \
+        libxml2-dev \
+        libxslt1-dev \
+        libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create an isolated venv we can copy wholesale into the runtime image.
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+WORKDIR /build
+COPY requirements.txt .
+# Strip dev-only deps (pytest/httpx/ruff) from the production install.
+RUN grep -ivE '^(pytest|pytest-asyncio|httpx|ruff)([=<>!~ ]|$)' requirements.txt > requirements.prod.txt \
+    && pip install --upgrade pip \
+    && pip install -r requirements.prod.txt
+
+# ----------------------------------------------------------------------------
+# Stage 2: runtime
+# ----------------------------------------------------------------------------
+FROM python:3.12-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH" \
+    UPLOAD_DIR=/app/uploads \
+    INBOX_DIR=/app/inbox
+
+# Runtime libs only — no build tools in the final image.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl \
+        libpq5 \
+        libxml2 \
+        libxslt1.1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Non-root app user
+RUN groupadd --system --gid 1000 app \
+    && useradd  --system --uid 1000 --gid app --home /app --shell /sbin/nologin app
+
+# Copy venv from builder
+COPY --from=builder /opt/venv /opt/venv
+
+WORKDIR /app
+
+# Copy application source
+COPY --chown=app:app app           ./app
+COPY --chown=app:app migrations    ./migrations
+COPY --chown=app:app alembic.ini   ./alembic.ini
+COPY --chown=app:app seed.py       ./seed.py
+
+# Pre-create writable dirs (volumes will be mounted on top in compose)
+RUN mkdir -p /app/uploads /app/inbox /app/inbox/xml \
+    && chown -R app:app /app
+
+USER app
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD curl -fsS http://localhost:8000/health || exit 1
+
+# Workers tuned for a small VPS (2 CPU). Override via UVICORN_WORKERS.
+ENV UVICORN_WORKERS=2
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${UVICORN_WORKERS} --proxy-headers --forwarded-allow-ips='*'"]

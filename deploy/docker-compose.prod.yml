@@ -1,0 +1,129 @@
+# DataPIM — production stack
+# Run from project root:
+#   docker compose -f deploy/docker-compose.prod.yml --env-file .env.prod up -d
+#
+# Notes:
+# - Postgres is dedicated to this project (NOT the shared daedalus-postgres dev container).
+# - Backend runs `alembic upgrade head` on boot before uvicorn.
+# - nginx is the public entry point on :80 / :443.
+
+name: datapim
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: datapim-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - datapim_net
+    # Do NOT publish 5432 to the host in prod — keep DB internal.
+
+  backend:
+    image: datapim-backend:prod
+    container_name: datapim-backend
+    restart: unless-stopped
+    build:
+      context: ../backend
+      dockerfile: ../deploy/Dockerfile.backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: production
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRES_MINUTES: ${JWT_ACCESS_EXPIRES_MINUTES:-1440}
+      JWT_REFRESH_EXPIRES_DAYS: ${JWT_REFRESH_EXPIRES_DAYS:-7}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      APP_URL: ${APP_URL}
+      API_URL: ${API_URL}
+      UPLOAD_DIR: /app/uploads
+      INBOX_DIR: /app/inbox
+      XML_IMPORT_DIR: ${XML_IMPORT_DIR:-/app/inbox/xml}
+      DEV_EMAIL: ${DEV_EMAIL:-}
+      DEV_PASSWORD: ${DEV_PASSWORD:-}
+      DEV_NAME: ${DEV_NAME:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      UVICORN_WORKERS: ${UVICORN_WORKERS:-2}
+    volumes:
+      - uploads_data:/app/uploads
+      - inbox_data:/app/inbox
+    # Wait for DB, then run migrations, then hand off to the image CMD.
+    command:
+      - sh
+      - -c
+      - |
+        echo "[entrypoint] running alembic upgrade head"
+        alembic upgrade head
+        echo "[entrypoint] starting uvicorn"
+        exec uvicorn app.main:app --host 0.0.0.0 --port 8000 \
+             --workers ${UVICORN_WORKERS:-2} \
+             --proxy-headers --forwarded-allow-ips='*'
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - datapim_net
+
+  frontend:
+    image: datapim-frontend:prod
+    container_name: datapim-frontend
+    restart: unless-stopped
+    build:
+      context: ../frontend
+      dockerfile: ../deploy/Dockerfile.frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    networks:
+      - datapim_net
+    # Internal port 80 only — nginx reverse-proxies to it.
+
+  nginx:
+    image: nginx:alpine
+    container_name: datapim-nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - certbot_webroot:/var/www/certbot:ro
+      - uploads_data:/var/www/uploads:ro
+    networks:
+      - datapim_net
+
+volumes:
+  postgres_data:
+    name: datapim_postgres_data
+  uploads_data:
+    name: datapim_uploads
+  inbox_data:
+    name: datapim_inbox
+  certbot_webroot:
+    name: datapim_certbot_webroot
+
+networks:
+  datapim_net:
+    name: datapim_net
+    driver: bridge

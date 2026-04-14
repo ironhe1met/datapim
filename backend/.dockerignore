@@ -1,10 +1,37 @@
+# Build & runtime junk
 __pycache__
 *.pyc
-.venv
-.env
-.git
+*.pyo
+*.pyd
 .pytest_cache
 .ruff_cache
+.mypy_cache
+
+# Virtualenv (built fresh inside the image)
+.venv
+venv
+
+# Secrets — must NEVER end up in an image layer
+.env
+.env.*
+!.env.example
+
+# VCS
+.git
+.gitignore
+
+# Local data — mounted as volumes in prod
+uploads
 uploads/*
+inbox
 inbox/*
+
+# Editor / OS
+.idea
+.vscode
+.DS_Store
+
+# Misc
+*.log
+*.sqlite3
 migrations/versions/__pycache__
