@@ -47,6 +47,26 @@
 | Ручне створення товару (не тільки з BUF) | pending | Scope відкладено з v1.0 по R-020 |
 | Приховати порожні кореневі категорії | pending | Зараз "Удалённые" залишається видимою навіть без дітей |
 
+---
+
+## Overnight QA + DevOps queue (план на вечір v1.0 → v1.1)
+
+Коли Daedalus v2 (autonomous queue) буде готовий, запустити по черзі чотири
+задачі з патерном two-phase:
+
+| # | Time | Task | Boundary |
+|---|------|------|----------|
+| 1 | 00:30 | **QA audit** | read-only: RBAC матриця (4 ролі × 12 екранів), AC перевірка, contract tests проти api_spec.md, UI smoke. Пише `.ai/qa_report.md`. |
+| 2 | 02:30 | **QA fix** | Читає qa_report.md, фіксить тільки явні баги. Per-fix commit + pytest + tsc. Рефакторів і нових фіч не робити. Judgment → "requires-human" в звіті. |
+| 3 | 05:00 | **DevOps prep** | Готує prod Dockerfile + docker-compose.prod.yml, nginx.conf з SSL, systemd unit, backup script, GitHub Actions CI (build+test), `.env.example` для prod, `.ai/devops_runbook.md`. **Не деплоїть, не SSH, не push.** |
+| 4 | 07:30 | **Overnight summary** | Читає qa_report.md + devops_runbook.md + git log → `.ai/overnight_summary.md`: що пофіксили, що залишилось для людини, наступні кроки. |
+
+**Загальні правила для всіх автономних:**
+- Кожен cron-firing = свіжа Claude сесія (власний rate limit)
+- Стан через файли в `.ai/` — це queue між тригерами
+- Якщо попередній впав у ліміт → наступний підхопить по стану у `queue.md`
+- Commit після кожної логічної зміни з referenced issue у `qa_report.md`
+
 ### v2.0.0 — B2B Module
 
 **Мета:** Партнери отримують доступ до системи — логін, перегляд каталогу, замовлення.
