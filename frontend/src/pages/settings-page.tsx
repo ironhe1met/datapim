@@ -21,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { BulkUpdateTool } from '@/components/bulk-update-tool';
 import { PageHeader } from '@/components/page-header';
 import { apiClient } from '@/lib/api-client';
 import { env } from '@/lib/env';
@@ -75,7 +76,8 @@ type ProfileValues = z.infer<typeof profileSchema>;
 
 export function SettingsPage() {
   const { t } = useTranslation();
-  const { user } = useAuthStore();
+  const { user, hasRole } = useAuthStore();
+  const isAdmin = hasRole(['admin']);
 
   // AI Providers state
   const [textProvider, setTextProvider] = useState<TextProvider>('anthropic');
@@ -268,6 +270,9 @@ export function SettingsPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Bulk Update — admin only, hidden from non-admins */}
+        {isAdmin && <BulkUpdateTool />}
 
         {/* Profile */}
         <Card>
