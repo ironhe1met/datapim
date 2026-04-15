@@ -395,56 +395,67 @@ export function ProductDetailPage() {
 
         {/* Tab: Основне — BUF | Збагачення | Характеристики */}
         <TabsContent value="main">
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* BUF — read-only original */}
-            <Card className="bg-muted/30">
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* BUF — read-only original (compact 1/3) */}
+            <Card className="bg-muted/30 lg:col-span-1">
               <CardHeader>
                 <CardTitle className="text-base">{t('product.buf.title')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <dl className="grid gap-3 sm:grid-cols-2">
-                  <div className="sm:col-span-2">
-                    <dt className="text-xs text-muted-foreground">{t('product.buf.name')}</dt>
-                    <dd className="text-sm">{product.buf_name ?? '—'}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">{t('product.buf.brand')}</dt>
-                    <dd className="text-sm">{product.buf_brand ?? '—'}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">{t('product.buf.country')}</dt>
-                    <dd className="text-sm">{ext.buf_country ?? '—'}</dd>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <dt className="text-xs text-muted-foreground">{t('product.buf.category')}</dt>
-                    <dd className="text-sm">
-                      {product.buf_category ? (
-                        <Link
-                          to={`/products?category_id=${product.buf_category.id}`}
-                          className="text-primary hover:underline"
-                        >
-                          {product.buf_category.name}
-                        </Link>
-                      ) : (
-                        '—'
-                      )}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">{t('product.buf.sku')}</dt>
-                    <dd className="font-mono text-sm">{product.sku}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">{t('product.buf.uktzed')}</dt>
-                    <dd className="font-mono text-xs">{ext.uktzed ?? '—'}</dd>
-                  </div>
+                <dl className="space-y-1.5 text-sm">
+                  {(
+                    [
+                      ['Назва', product.buf_name ?? '—', false],
+                      ['Бренд', product.buf_brand ?? '—', false],
+                      ['Країна', ext.buf_country ?? '—', false],
+                      [
+                        'Категорія',
+                        product.buf_category ? (
+                          <Link
+                            to={`/products?category_id=${product.buf_category.id}`}
+                            className="text-primary hover:underline"
+                          >
+                            {product.buf_category.name}
+                          </Link>
+                        ) : (
+                          '—'
+                        ),
+                        false,
+                      ],
+                      ['Код', product.internal_code, true],
+                      ['SKU', product.sku, true],
+                      ['UKTZED', ext.uktzed ?? '—', true],
+                      ['Кількість', product.buf_quantity ?? '—', false],
+                      ['Ціна', formatPrice(product.buf_price, product.buf_currency), false],
+                      ['Валюта', product.buf_currency ?? '—', false],
+                      [
+                        'В наявності',
+                        product.buf_in_stock ? (
+                          <Badge variant="default">{t('product.badges.in_stock')}</Badge>
+                        ) : (
+                          <Badge variant="secondary">{t('product.badges.out_of_stock')}</Badge>
+                        ),
+                        false,
+                      ],
+                    ] as Array<[string, React.ReactNode, boolean]>
+                  ).map(([label, value, mono]) => (
+                    <div
+                      key={label}
+                      className="flex items-start justify-between gap-3 border-b border-border/40 pb-1.5 last:border-0 last:pb-0"
+                    >
+                      <dt className="text-xs text-muted-foreground">{label}</dt>
+                      <dd className={`text-right ${mono ? 'font-mono text-xs' : 'text-sm'}`}>
+                        {value}
+                      </dd>
+                    </div>
+                  ))}
                 </dl>
               </CardContent>
             </Card>
 
-            {/* Збагачення — editable form (or read-only for manager/viewer) */}
+            {/* Збагачення — editable form (or read-only for manager/viewer), wider 2/3 */}
             {canEdit ? (
-              <Card>
+              <Card className="lg:col-span-2">
                 <CardHeader>
                   <CardTitle className="text-base">{t('product.enriched.title')}</CardTitle>
                 </CardHeader>
@@ -542,7 +553,7 @@ export function ProductDetailPage() {
                 </CardContent>
               </Card>
             ) : (
-              <Card>
+              <Card className="lg:col-span-2">
                 <CardHeader>
                   <CardTitle className="text-base">{t('product.enriched.title')}</CardTitle>
                 </CardHeader>
