@@ -41,11 +41,44 @@
 
 ### v1.1 — Post-MVP покращення
 
+**Філософія enrichment** (обговорено 2026-04-15):
+BUF дані сирі — категорії = бренди, відсутні brand-поля, нема структури.
+Архітектурно вже маємо рішення (override pattern R-017 + buf_category/custom_category).
+Залишилось дати оператору **інструменти масового збагачення**, щоб привести 11k+ товарів
+до партнерського каталогу з чистою таксономією, повними брендами і описами.
+
+#### Bulk Tools
+
 | Компонент | Статус | Примітки |
 |-----------|--------|----------|
-| Per-category toggle "не відправляти в XML" | pending | Флаг на категорії; якщо вимкнено — категорія + її товари не йдуть в публічний XML експорт для партнерів |
-| Ручне створення товару (не тільки з BUF) | pending | Scope відкладено з v1.0 по R-020 |
-| Приховати порожні кореневі категорії | pending | Зараз "Удалённые" залишається видимою навіть без дітей |
+| **Quick-win:** `POST /api/products/bulk-update` | pending | Filter (buf_category_id рекурсивно по дітях) + set (custom_*); admin only; dry_run preview; ліміт 5000 рядків. Дозволить за 5-10 curl викликів закрити топ брендів. |
+| **UI bulk edit на /products** | pending | Чекбокси на рядках → modal "змінити для N товарів" → preview → commit. |
+| **Bulk import з CSV/Excel** | pending | Експорт каталогу → редагуєш у Excel → upload назад. Колонки: internal_code (key), custom_brand, custom_category_name, custom_country, description. |
+| **"Promote BUF category to brand"** | pending | Кнопка на BUF-категорії: "Це бренд" → проставляє `custom_brand=<назва>` всім товарам цієї категорії та її підкатегорій рекурсивно. |
+| **Bulk reset** | pending | Зворотня операція: скинути custom_* для виборки. |
+
+#### Enrichment Monitoring
+
+| Компонент | Статус | Примітки |
+|-----------|--------|----------|
+| Сторінка `/enrichment` | pending | Прогрес: % без бренду, без custom_category, без опису, без зображення. Клік → відфільтрований список товарів. |
+| Filter на /products: "needs enrichment" | pending | Quick-filters: без custom_brand / без custom_category / без description / без image. |
+| Дельта останнього імпорту | pending | "Нові товари без бренду: 12", "Нові BUF категорії: 8". Видно що принесла остання синхронізація. |
+
+#### XML Export Control
+
+| Компонент | Статус | Примітки |
+|-----------|--------|----------|
+| Per-category toggle "не відправляти в XML" | pending | Флаг на категорії; якщо вимкнено — категорія + її товари не йдуть в публічний XML експорт для партнерів. |
+| Per-product toggle "не експортувати" | pending | На випадок одиничних виключень (тестові, застарілі). |
+
+#### Інше
+
+| Компонент | Статус | Примітки |
+|-----------|--------|----------|
+| Ручне створення товару (не тільки з BUF) | pending | Scope відкладено з v1.0 по R-020. |
+| Приховати порожні кореневі категорії | pending | Зараз "Удалённые" залишається видимою навіть без дітей. |
+| Soft-delete BUF категорій що зникли з фіду | pending | Якщо категорія відсутня у XML 7+ днів — позначити неактивною. Не fyzilly видаляти (бо overrides). |
 | Вирішити долю `POST /api/categories` (QA #m-1) | pending | R-015 каже "category import-driven, no create". Або видалити endpoint + seed "Main" у міграції, або додати в spec + `DELETE`. Зараз endpoint є, DELETE нема. |
 | Image upload приймає `is_primary` як form field (QA #m-2) | pending | Зараз перше фото автоматично primary. Треба `is_primary: bool \| None = Form(None)` у `images.py:upload_image`. |
 | `ProductListItem.quantity` — або drop, або додати в api_spec (QA #m-3) | pending | XML export навмисно ховає quantity від партнерів (R-004). Якщо dev випадково засеріалізує ProductListItem → quantity протіче. |
@@ -55,6 +88,18 @@
 | Dashboard 6 COUNT → 1 CTE-запит (QA #i-7) | pending | Зараз ~50мс на порожній БД. При зростанні до 100k+ товарів треба оптимізувати. |
 | Swap `python-jose` → `pyjwt` (QA #i-3) | pending | `python-jose` використовує deprecated `datetime.utcnow()` — зламається в Python 3.13. |
 | Прибрати `@pytest.mark.asyncio` з sync тестів (QA #i-2) | pending | 6 sync тестів у `test_import.py` з непотрібним маркером — cosmetic warnings. |
+
+### v1.2 — AI Enrichment
+
+**Мета:** автоматизувати збагачення для решти товарів які bulk-tools не покриють.
+
+| Компонент | Статус | Примітки |
+|-----------|--------|----------|
+| AI-агент категоризації | pending | На вхід: name + buf_brand + uktzed. На вихід: пропозиція custom_brand + custom_category + опис. Batch'ами по 50. |
+| Review workflow | pending | Архітектурно готовий (`ai_reviews` таблиця). UI: список pending → approve/reject/edit → запис у custom_*. |
+| "Збагатити категорію" одним кліком | pending | Запускає batch AI на всі товари в категорії з progress bar. |
+| AI генерація зображень для товарів без фото | pending | Flux/DALL-E з review workflow. Cost guardrails: денний ліміт. |
+| Settings: AI provider toggle + API keys | pending | Multi-provider: Anthropic / OpenAI / Google. |
 
 ---
 
