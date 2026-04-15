@@ -293,43 +293,47 @@ export function ProductDetailPage() {
 
   return (
     <div>
-      {/* Breadcrumb */}
-      <Breadcrumb className="mb-4">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink render={<Link to="/products" />}>
-              {t('products.title')}
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          {breadcrumb.map((cat) => (
-            <span key={cat.id} className="contents">
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink render={<Link to={`/products?category_id=${cat.id}`} />}>
-                  {cat.name}
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-            </span>
-          ))}
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{product.name}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+      {/* Nav row: back + breadcrumb */}
+      <div className="mb-4 flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => navigate('/products')}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink render={<Link to="/products" />}>
+                {t('products.title')}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            {breadcrumb.map((cat) => (
+              <span key={cat.id} className="contents">
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink render={<Link to={`/products?category_id=${cat.id}`} />}>
+                    {cat.name}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+              </span>
+            ))}
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage className="max-w-[280px] truncate">
+                {product.name}
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
 
-      {/* Hero — bigger thumbnail + title + key facts */}
-      <Card className="mb-6">
-        <CardContent className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => navigate('/products')}
-            className="self-start"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex h-32 w-32 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+      {/* Hero — image | identity | price (3 zones with vertical divider) */}
+      <Card className="mb-6 overflow-hidden">
+        <div className="flex flex-col gap-6 p-6 md:flex-row md:items-stretch">
+          {/* Image */}
+          <div className="h-40 w-40 flex-shrink-0 self-center overflow-hidden rounded-xl bg-muted ring-1 ring-border md:self-auto">
             {product.images[0] ? (
               <img
                 src={resolveImageUrl(product.images[0].file_path)}
@@ -337,23 +341,23 @@ export function ProductDetailPage() {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <Package className="h-12 w-12 text-muted-foreground" />
+              <div className="flex h-full w-full items-center justify-center">
+                <Package className="h-14 w-14 text-muted-foreground/40" />
+              </div>
             )}
           </div>
-          <div className="min-w-0 flex-1 space-y-3">
+
+          {/* Identity + status badges */}
+          <div className="flex min-w-0 flex-1 flex-col justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold leading-tight">{product.name}</h1>
-              <p className="mt-1 font-mono text-sm text-muted-foreground">
+              <h1 className="text-2xl font-bold leading-tight tracking-tight">
+                {product.name}
+              </h1>
+              <p className="mt-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">
                 {product.internal_code}
               </p>
             </div>
-            <div className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
-              <span className="text-2xl font-bold">
-                {formatPrice(product.buf_price, product.buf_currency)}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {product.buf_quantity ?? 0} шт
-              </span>
+            <div className="flex flex-wrap items-center gap-2">
               {product.buf_in_stock ? (
                 <Badge variant="default">{t('product.badges.in_stock')}</Badge>
               ) : (
@@ -373,7 +377,18 @@ export function ProductDetailPage() {
               )}
             </div>
           </div>
-        </CardContent>
+
+          {/* Price block — visually separated */}
+          <div className="flex flex-col items-start justify-center gap-1 border-t pt-4 md:items-end md:border-l md:border-t-0 md:pl-6 md:pt-0">
+            <span className="text-3xl font-bold tracking-tight">
+              {formatPrice(product.buf_price, product.buf_currency)}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              Залишок:{' '}
+              <strong className="text-foreground">{product.buf_quantity ?? 0}</strong> шт
+            </span>
+          </div>
+        </div>
       </Card>
 
       {/* Tabs: 3 tabs */}
