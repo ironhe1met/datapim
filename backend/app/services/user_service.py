@@ -139,3 +139,35 @@ async def deactivate_user(db: AsyncSession, user_id: UUID) -> User:
         await db.commit()
         await db.refresh(user)
     return user
+
+
+async def reactivate_user(db: AsyncSession, user_id: UUID) -> User:
+    user = await get_user(db, user_id)
+    if user is None:
+        raise _not_found_exc()
+
+    if not user.is_active:
+        user.is_active = True
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    return user
+
+
+async def hard_delete_user(db: AsyncSession, user_id: UUID) -> None:
+    """Permanent removal — only for already-deactivated users."""
+    user = await get_user(db, user_id)
+    if user is None:
+        raise _not_found_exc()
+    if user.is_active:
+        from fastapi import HTTPException, status as http_status
+
+        raise HTTPException(
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": "Спершу деактивуйте користувача",
+                "code": "USER_STILL_ACTIVE",
+            },
+        )
+    await db.delete(user)
+    await db.commit()

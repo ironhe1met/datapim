@@ -109,3 +109,30 @@ async def deactivate_user(
     await user_service.deactivate_user(db, user_id)
     logger.info("user_deactivated", user_id=str(user_id), actor_id=str(actor.id))
     return {"message": "User deactivated"}
+
+
+@router.post("/{user_id}/reactivate", response_model=UserRead)
+async def reactivate_user(
+    user_id: UUID,
+    db: AsyncSession = Depends(get_session),
+    actor: User = Depends(require_role("admin")),
+) -> UserRead:
+    user = await user_service.reactivate_user(db, user_id)
+    logger.info("user_reactivated", user_id=str(user_id), actor_id=str(actor.id))
+    return UserRead.model_validate(user)
+
+
+@router.delete("/{user_id}/permanent")
+async def hard_delete_user(
+    user_id: UUID,
+    db: AsyncSession = Depends(get_session),
+    actor: User = Depends(require_role("admin")),
+) -> dict[str, str]:
+    if actor.id == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "Cannot delete yourself", "code": "SELF_DELETE"},
+        )
+    await user_service.hard_delete_user(db, user_id)
+    logger.info("user_hard_deleted", user_id=str(user_id), actor_id=str(actor.id))
+    return {"message": "User permanently deleted"}

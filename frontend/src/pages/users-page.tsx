@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Users, Plus, Pencil, UserMinus } from 'lucide-react';
+import { Users, Plus, Pencil, UserMinus, UserCheck, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -106,6 +106,8 @@ export function UsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
   const [deactivatingUser, setDeactivatingUser] = useState<User | null>(null);
+  const [hardDeleteDialogOpen, setHardDeleteDialogOpen] = useState(false);
+  const [hardDeletingUser, setHardDeletingUser] = useState<User | null>(null);
 
   // Create form
   const createForm = useForm<CreateUserValues>({
@@ -178,6 +180,32 @@ export function UsersPage() {
       showSuccess(t('users.deactivate.confirm'));
       setDeactivateDialogOpen(false);
       setDeactivatingUser(null);
+    },
+    onError: (err) => showError(extractApiError(err)),
+  });
+
+  const reactivateMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await apiClient.post(`/api/users/${userId}/reactivate`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      showSuccess('Користувача активовано');
+    },
+    onError: (err) => showError(extractApiError(err)),
+  });
+
+  const hardDeleteMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await apiClient.delete(`/api/users/${userId}/permanent`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      showSuccess('Користувача видалено назавжди');
+      setHardDeleteDialogOpen(false);
+      setHardDeletingUser(null);
     },
     onError: (err) => showError(extractApiError(err)),
   });
@@ -286,18 +314,42 @@ export function UsersPage() {
                       <Button
                         variant="ghost"
                         size="icon-sm"
+                        title="Редагувати"
                         onClick={() => handleOpenEdit(user)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      {user.is_active && (
+                      {user.is_active ? (
                         <Button
                           variant="ghost"
                           size="icon-sm"
+                          title="Деактивувати"
                           onClick={() => handleOpenDeactivate(user)}
                         >
                           <UserMinus className="h-4 w-4" />
                         </Button>
+                      ) : (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            title="Активувати"
+                            onClick={() => reactivateMutation.mutate(user.id)}
+                          >
+                            <UserCheck className="h-4 w-4 text-success" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            title="Видалити назавжди"
+                            onClick={() => {
+                              setHardDeletingUser(user);
+                              setHardDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </>
                       )}
                     </div>
                   </TableCell>
@@ -519,6 +571,36 @@ export function UsersPage() {
               disabled={deactivateMutation.isPending}
             >
               {t('users.deactivate.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Hard delete confirmation */}
+      <AlertDialog
+        open={hardDeleteDialogOpen}
+        onOpenChange={setHardDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Видалити користувача {hardDeletingUser?.name} назавжди?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Це повне видалення з бази без можливості відновити. Якщо хочете
+              лише тимчасово заблокувати — використайте Деактивацію.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() =>
+                hardDeletingUser && hardDeleteMutation.mutate(hardDeletingUser.id)
+              }
+              disabled={hardDeleteMutation.isPending}
+            >
+              Видалити назавжди
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

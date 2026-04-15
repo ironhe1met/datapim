@@ -464,3 +464,61 @@ async def test_deactivated_user_cannot_login(
     )
     assert login.status_code == 403
     assert login.json()["code"] == "ACCOUNT_DISABLED"
+
+
+# --- Reactivate + hard delete ----------------------------------------------
+
+
+async def test_reactivate_user(client: AsyncClient, admin_user, admin_headers):
+    create = await client.post(
+        "/api/users",
+        headers=admin_headers,
+        json={
+            "email": "reactivate@example.com",
+            "name": "R",
+            "password": "Pass1234!",
+            "role": "viewer",
+        },
+    )
+    uid = create.json()["id"]
+
+    deact = await client.delete(f"/api/users/{uid}", headers=admin_headers)
+    assert deact.status_code == 200
+
+    react = await client.post(f"/api/users/{uid}/reactivate", headers=admin_headers)
+    assert react.status_code == 200
+    assert react.json()["is_active"] is True
+
+
+async def test_hard_delete_user(client: AsyncClient, admin_user, admin_headers):
+    create = await client.post(
+        "/api/users",
+        headers=admin_headers,
+        json={
+            "email": "harddel@example.com",
+            "name": "H",
+            "password": "Pass1234!",
+            "role": "viewer",
+        },
+    )
+    uid = create.json()["id"]
+
+    # Cannot hard-delete an active user.
+    early = await client.delete(f"/api/users/{uid}/permanent", headers=admin_headers)
+    assert early.status_code == 400, early.text
+
+    # Deactivate, then hard-delete works.
+    await client.delete(f"/api/users/{uid}", headers=admin_headers)
+    perm = await client.delete(f"/api/users/{uid}/permanent", headers=admin_headers)
+    assert perm.status_code == 200
+
+    # User is gone.
+    gone = await client.get(f"/api/users/{uid}", headers=admin_headers)
+    assert gone.status_code == 404
+
+
+async def test_hard_delete_self_blocked(client: AsyncClient, admin_user, admin_headers):
+    me = await client.get("/api/auth/me", headers=admin_headers)
+    self_id = me.json()["id"]
+    resp = await client.delete(f"/api/users/{self_id}/permanent", headers=admin_headers)
+    assert resp.status_code == 400
