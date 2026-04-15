@@ -13,7 +13,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import Select, case, func, or_, select
+from sqlalchemy import Select, case, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.category import Category
@@ -23,6 +23,9 @@ from app.models.product_image import ProductImage
 from app.schemas.product import (
     RESETTABLE_FIELDS,
     BreadcrumbItem,
+    BulkUpdateRequest,
+    BulkUpdateResponse,
+    BulkUpdateSampleItem,
     CategoryInfo,
     CategoryRef,
     EnrichmentStatus,
@@ -388,3 +391,88 @@ async def reset_field(db: AsyncSession, product_id: UUID, field: str) -> Product
     await db.commit()
     await db.refresh(product)
     return product
+
+
+# --- Bulk update -----------------------------------------------------------
+
+
+_BULK_MAX_ROWS = 5000
+
+
+async def bulk_update(db: AsyncSession, data: BulkUpdateRequest) -> BulkUpdateResponse:
+    """Apply same custom_* values to every product matching the filter.
+
+    v1.0 supports filter by `buf_category_id` (with optional descendant walk).
+    Set fields are limited to `custom_brand`, `custom_country`, `custom_category_id`
+    (R-017 — buf_* are import-owned).
+
+    Refuses to commit if the matched count exceeds `_BULK_MAX_ROWS` to prevent
+    accidental "set custom_brand for entire DB". Use a tighter filter or split.
+    """
+    # 1. Resolve target category set.
+    target_cat = (
+        await db.execute(select(Category).where(Category.id == data.filter.buf_category_id))
+    ).scalar_one_or_none()
+    if target_cat is None:
+        raise _category_not_found_exc()
+
+    if data.filter.include_descendants:
+        cat_ids = await _descendant_category_ids(db, data.filter.buf_category_id)
+    else:
+        cat_ids = [data.filter.buf_category_id]
+
+    # 2. Validate custom_category_id exists if provided.
+    set_fields = data.set.model_fields_set
+    if "custom_category_id" in set_fields and data.set.custom_category_id is not None:
+        exists = (
+            await db.execute(
+                select(Category.id).where(Category.id == data.set.custom_category_id)
+            )
+        ).scalar_one_or_none()
+        if exists is None:
+            raise _category_not_found_exc()
+
+    # 3. Match preview.
+    matched_q = select(Product).where(Product.buf_category_id.in_(cat_ids))
+    matched_rows = list((await db.execute(matched_q)).scalars().all())
+    matched = len(matched_rows)
+
+    if matched > _BULK_MAX_ROWS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": f"Занадто багато товарів ({matched}). Максимум {_BULK_MAX_ROWS} за один виклик.",
+                "code": "BULK_TOO_MANY",
+            },
+        )
+
+    sample = [
+        BulkUpdateSampleItem(
+            id=p.id,
+            internal_code=p.internal_code,
+            name=p.custom_name or p.buf_name,
+        )
+        for p in matched_rows[:5]
+    ]
+
+    if data.dry_run or matched == 0:
+        return BulkUpdateResponse(matched=matched, updated=0, sample=sample)
+
+    # 4. Build SET clause from explicitly-set fields only.
+    values: dict = {}
+    if "custom_brand" in set_fields:
+        values["custom_brand"] = data.set.custom_brand
+    if "custom_country" in set_fields:
+        values["custom_country"] = data.set.custom_country
+    if "custom_category_id" in set_fields:
+        values["custom_category_id"] = data.set.custom_category_id
+
+    if not values:
+        return BulkUpdateResponse(matched=matched, updated=0, sample=sample)
+
+    # 5. Apply.
+    await db.execute(
+        update(Product).where(Product.buf_category_id.in_(cat_ids)).values(**values)
+    )
+    await db.commit()
+    return BulkUpdateResponse(matched=matched, updated=matched, sample=sample)

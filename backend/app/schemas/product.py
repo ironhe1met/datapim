@@ -175,6 +175,44 @@ class ResetFieldRequest(BaseModel):
     field: str
 
 
+class BulkUpdateFilter(BaseModel):
+    """Pick which products are touched by the bulk update.
+
+    For now: by `buf_category_id`. `include_descendants=True` walks the
+    category tree downward (e.g. selecting BUF brand-category 'JET' then
+    matches all 1009 JET products even if they sit under sub-categories).
+    """
+
+    buf_category_id: UUID
+    include_descendants: bool = True
+
+
+class BulkUpdateSet(BaseModel):
+    """Fields to set. Only `custom_*` allowed (R-017 — buf_* is import-owned)."""
+
+    custom_brand: str | None = Field(default=None, max_length=255)
+    custom_country: str | None = Field(default=None, max_length=100)
+    custom_category_id: UUID | None = None
+
+
+class BulkUpdateRequest(BaseModel):
+    filter: BulkUpdateFilter
+    set: BulkUpdateSet
+    dry_run: bool = False
+
+
+class BulkUpdateSampleItem(BaseModel):
+    id: UUID
+    internal_code: str
+    name: str  # resolved
+
+
+class BulkUpdateResponse(BaseModel):
+    matched: int  # how many products would be / were touched
+    updated: int  # 0 when dry_run=True
+    sample: list[BulkUpdateSampleItem]  # first 5 affected products
+
+
 # --- List response ----------------------------------------------------------
 
 

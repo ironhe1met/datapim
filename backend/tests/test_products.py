@@ -963,3 +963,155 @@ async def test_reset_custom_category_restores_buf(
     assert data["category"]["id"] == str(sample_category.id)
     assert data["buf_category"]["id"] == str(sample_category.id)
     assert data["category"]["id"] == data["buf_category"]["id"]
+
+
+# --- Bulk update -----------------------------------------------------------
+
+
+async def _seed_brand_with_children(test_session_factory, brand_name: str, child_count: int):
+    """Create one root 'brand' category + N children, return (brand_cat, children_ids)."""
+    from app.models.category import Category
+
+    async with test_session_factory() as session:
+        brand = Category(
+            external_id=f"EXT-{brand_name}",
+            parent_id=None,
+            name=brand_name,
+            is_active=True,
+            product_count=0,
+        )
+        session.add(brand)
+        await session.commit()
+        await session.refresh(brand)
+        children = []
+        for i in range(child_count):
+            child = Category(
+                external_id=f"EXT-{brand_name}-CH{i}",
+                parent_id=brand.id,
+                name=f"{brand_name} sub {i}",
+                is_active=True,
+                product_count=0,
+            )
+            session.add(child)
+            children.append(child)
+        await session.commit()
+        for c in children:
+            await session.refresh(c)
+        return brand, children
+
+
+async def _seed_products_in_categories(test_session_factory, cats_with_counts):
+    """cats_with_counts: list of (category, n_products). Returns total created."""
+    from app.models.product import EnrichmentStatus, Product
+
+    total = 0
+    async with test_session_factory() as session:
+        for cat, n in cats_with_counts:
+            for i in range(n):
+                p = Product(
+                    internal_code=f"BULK-{cat.external_id}-{i}",
+                    sku=f"SKU-BULK-{cat.external_id}-{i}",
+                    buf_category_id=cat.id,
+                    buf_name=f"Product {i}",
+                    buf_price=Decimal("100.00"),
+                    buf_currency="UAH",
+                    buf_in_stock=True,
+                    is_active=True,
+                    has_pending_review=False,
+                    enrichment_status=EnrichmentStatus.none,
+                )
+                session.add(p)
+                total += 1
+        await session.commit()
+    return total
+
+
+async def test_bulk_update_brand_recursive(
+    client: AsyncClient, admin_user, admin_headers, test_session_factory
+):
+    brand, children = await _seed_brand_with_children(test_session_factory, "JET", 2)
+    # 3 in root, 2 in each of 2 children = 7 total
+    await _seed_products_in_categories(
+        test_session_factory, [(brand, 3), (children[0], 2), (children[1], 2)]
+    )
+
+    resp = await client.post(
+        "/api/products/bulk-update",
+        headers=admin_headers,
+        json={
+            "filter": {"buf_category_id": str(brand.id), "include_descendants": True},
+            "set": {"custom_brand": "JET"},
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["matched"] == 7
+    assert data["updated"] == 7
+    assert len(data["sample"]) == 5
+
+    # Verify db state.
+    list_resp = await client.get(
+        f"/api/products?category_id={brand.id}&per_page=100", headers=admin_headers
+    )
+    items = list_resp.json()["data"]
+    # The /products list filters by resolved category, so children's products
+    # don't show up under the root unless we reassign — instead query each row.
+    for item in items:
+        assert item["brand"] == "JET"
+
+
+async def test_bulk_update_dry_run(
+    client: AsyncClient, admin_user, admin_headers, test_session_factory
+):
+    brand, _ = await _seed_brand_with_children(test_session_factory, "AEG", 0)
+    await _seed_products_in_categories(test_session_factory, [(brand, 4)])
+
+    resp = await client.post(
+        "/api/products/bulk-update",
+        headers=admin_headers,
+        json={
+            "filter": {"buf_category_id": str(brand.id)},
+            "set": {"custom_brand": "AEG"},
+            "dry_run": True,
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["matched"] == 4
+    assert data["updated"] == 0  # dry_run
+
+    # Confirm nothing was actually written.
+    list_resp = await client.get(
+        f"/api/products?category_id={brand.id}", headers=admin_headers
+    )
+    for item in list_resp.json()["data"]:
+        assert item["brand"] is None
+
+
+async def test_bulk_update_requires_admin(
+    client: AsyncClient, admin_user, operator_headers, test_session_factory
+):
+    brand, _ = await _seed_brand_with_children(test_session_factory, "Bosch", 0)
+    resp = await client.post(
+        "/api/products/bulk-update",
+        headers=operator_headers,
+        json={
+            "filter": {"buf_category_id": str(brand.id)},
+            "set": {"custom_brand": "Bosch"},
+        },
+    )
+    assert resp.status_code == 403
+
+
+async def test_bulk_update_unknown_category(
+    client: AsyncClient, admin_user, admin_headers
+):
+    resp = await client.post(
+        "/api/products/bulk-update",
+        headers=admin_headers,
+        json={
+            "filter": {"buf_category_id": "00000000-0000-0000-0000-000000000000"},
+            "set": {"custom_brand": "X"},
+        },
+    )
+    assert resp.status_code == 404

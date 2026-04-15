@@ -19,6 +19,8 @@ from app.database import get_session
 from app.dependencies.auth import get_current_user, require_role
 from app.models.user import User
 from app.schemas.product import (
+    BulkUpdateRequest,
+    BulkUpdateResponse,
     ProductDetail,
     ProductListItem,
     ProductListResponse,
@@ -94,6 +96,32 @@ async def update_product(
         fields=list(body.model_fields_set),
     )
     return await product_service.build_product_detail(db, product)
+
+
+@router.post("/bulk-update", response_model=BulkUpdateResponse)
+async def bulk_update_products(
+    body: BulkUpdateRequest,
+    db: AsyncSession = Depends(get_session),
+    actor: User = Depends(require_role("admin")),
+) -> BulkUpdateResponse:
+    """Mass-assign custom_* fields to all products under a BUF category.
+
+    Use case: BUF category 'JET' contains 1009 products with empty brand —
+    one call sets `custom_brand="JET"` for all of them, optionally including
+    descendant categories. `dry_run=true` previews without writing.
+    """
+    result = await product_service.bulk_update(db, body)
+    logger.info(
+        "products_bulk_updated",
+        actor_id=str(actor.id),
+        buf_category_id=str(body.filter.buf_category_id),
+        include_descendants=body.filter.include_descendants,
+        matched=result.matched,
+        updated=result.updated,
+        dry_run=body.dry_run,
+        fields=list(body.set.model_fields_set),
+    )
+    return result
 
 
 @router.post("/{product_id}/reset-field", response_model=ProductDetail)
