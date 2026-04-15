@@ -46,6 +46,15 @@
 | Per-category toggle "не відправляти в XML" | pending | Флаг на категорії; якщо вимкнено — категорія + її товари не йдуть в публічний XML експорт для партнерів |
 | Ручне створення товару (не тільки з BUF) | pending | Scope відкладено з v1.0 по R-020 |
 | Приховати порожні кореневі категорії | pending | Зараз "Удалённые" залишається видимою навіть без дітей |
+| Вирішити долю `POST /api/categories` (QA #m-1) | pending | R-015 каже "category import-driven, no create". Або видалити endpoint + seed "Main" у міграції, або додати в spec + `DELETE`. Зараз endpoint є, DELETE нема. |
+| Image upload приймає `is_primary` як form field (QA #m-2) | pending | Зараз перше фото автоматично primary. Треба `is_primary: bool \| None = Form(None)` у `images.py:upload_image`. |
+| `ProductListItem.quantity` — або drop, або додати в api_spec (QA #m-3) | pending | XML export навмисно ховає quantity від партнерів (R-004). Якщо dev випадково засеріалізує ProductListItem → quantity протіче. |
+| Документувати "SKU не унікальний" (QA #m-4) | pending | У BUF фіді 149 дублів SKU. Партнери-імпортери можуть подвоїти товари. Додати нотатку в devops_runbook або `.ai/api_spec.md`. |
+| Cleanup тестових артефактів з QA (QA requires-human) | pending | Одна orphan категорія `QA-PROBE-CAT`, 2 orphan image files в `uploads/`. Безпечно видалити перед prod. |
+| Login error wording — спец vs реалізація (QA #C-11) | pending | PRD/spec каже два різні повідомлення ("користувача нема" / "невірний пароль"); реалізація віддає одне ("Невірний email або пароль") — security best practice. Треба оновити PRD. |
+| Dashboard 6 COUNT → 1 CTE-запит (QA #i-7) | pending | Зараз ~50мс на порожній БД. При зростанні до 100k+ товарів треба оптимізувати. |
+| Swap `python-jose` → `pyjwt` (QA #i-3) | pending | `python-jose` використовує deprecated `datetime.utcnow()` — зламається в Python 3.13. |
+| Прибрати `@pytest.mark.asyncio` з sync тестів (QA #i-2) | pending | 6 sync тестів у `test_import.py` з непотрібним маркером — cosmetic warnings. |
 
 ---
 

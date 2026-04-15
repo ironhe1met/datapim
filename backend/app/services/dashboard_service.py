@@ -101,4 +101,5 @@ async def get_stats(session: AsyncSession) -> DashboardStatsResponse:
         categories_total=categories_total,
         last_import=last_import,
         ai_tasks_today=0,
+        ai_tasks_completed_today=0,
     )

@@ -16,6 +16,12 @@ os.environ.setdefault(
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("JWT_SECRET", "test-secret-do-not-use-in-prod")
 
+# Disable rate limiting in tests — the suite hits /auth/login many times from
+# the same TestClient address, which would trip the 5/min/IP limit.
+from app.security.rate_limit import set_enabled  # noqa: E402
+
+set_enabled(False)
+
 
 _SCHEMA_READY = False
 

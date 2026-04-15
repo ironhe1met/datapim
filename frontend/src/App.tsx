@@ -6,8 +6,6 @@ import { DashboardPage } from '@/pages/dashboard-page';
 import { ProductsPage } from '@/pages/products-page';
 import { ProductDetailPage } from '@/pages/product-detail-page';
 import { CategoriesPage } from '@/pages/categories-page';
-import { ReviewsPage } from '@/pages/reviews-page';
-import { ReviewDetailPage } from '@/pages/review-detail-page';
 import { UsersPage } from '@/pages/users-page';
 import { ImportPage } from '@/pages/import-page';
 import { SettingsPage } from '@/pages/settings-page';
@@ -29,22 +27,6 @@ function App() {
         <Route path="products" element={<ProductsPage />} />
         <Route path="products/:id" element={<ProductDetailPage />} />
         <Route path="categories" element={<CategoriesPage />} />
-        <Route
-          path="reviews"
-          element={
-            <PrivateRoute allowedRoles={['admin', 'operator', 'manager']}>
-              <ReviewsPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="reviews/:id"
-          element={
-            <PrivateRoute allowedRoles={['admin', 'operator', 'manager']}>
-              <ReviewDetailPage />
-            </PrivateRoute>
-          }
-        />
         <Route
           path="users"
           element={

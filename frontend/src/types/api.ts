@@ -198,4 +198,5 @@ export interface DashboardStats {
   categories_total: number;
   last_import: LastImportInfo | null;
   ai_tasks_today: number;
+  ai_tasks_completed_today: number;
 }

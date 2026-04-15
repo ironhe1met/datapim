@@ -8,6 +8,7 @@ import pytest
 from fastapi import Depends, FastAPI
 from httpx import ASGITransport, AsyncClient
 
+from app.security.rate_limit import set_enabled
 from tests.conftest import ADMIN_EMAIL, ADMIN_PASSWORD
 
 pytestmark = pytest.mark.asyncio
@@ -67,6 +68,31 @@ async def test_login_deactivated_user(client: AsyncClient, inactive_user) -> Non
 
 
 # --- /me ---
+
+
+async def test_login_rate_limited(client: AsyncClient, admin_user) -> None:
+    """6th bad-cred login in a minute must return 429."""
+    from app.security import rate_limit as rl
+
+    rl._attempts.clear()
+    set_enabled(True)
+    try:
+        for _ in range(5):
+            resp = await client.post(
+                "/api/auth/login",
+                json={"email": ADMIN_EMAIL, "password": "wrong-password"},
+            )
+            assert resp.status_code == 401
+        resp = await client.post(
+            "/api/auth/login",
+            json={"email": ADMIN_EMAIL, "password": "wrong-password"},
+        )
+        assert resp.status_code == 429
+        body = resp.json()
+        assert body["code"] == "RATE_LIMIT"
+    finally:
+        set_enabled(False)
+        rl._attempts.clear()
 
 
 async def test_me_success(client: AsyncClient, admin_user, admin_headers) -> None:

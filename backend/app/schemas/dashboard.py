@@ -35,3 +35,4 @@ class DashboardStatsResponse(BaseModel):
     categories_total: int
     last_import: LastImportInfo | None
     ai_tasks_today: int
+    ai_tasks_completed_today: int
