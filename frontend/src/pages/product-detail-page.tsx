@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   Trash2,
   Star,
+  Package,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -317,30 +318,73 @@ export function ProductDetailPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      {/* Header */}
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <Button variant="ghost" size="icon-sm" onClick={() => navigate('/products')}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-2xl font-bold">{product.name}</h1>
-        {product.buf_in_stock ? (
-          <Badge variant="default">{t('product.badges.in_stock')}</Badge>
-        ) : (
-          <Badge variant="secondary">{t('product.badges.out_of_stock')}</Badge>
-        )}
-        {product.enrichment_status === 'none' && (
-          <Badge variant="destructive">{t('product.badges.enrichment_none')}</Badge>
-        )}
-        {product.enrichment_status === 'partial' && (
-          <Badge variant="secondary">{t('product.badges.enrichment_partial')}</Badge>
-        )}
-        {product.enrichment_status === 'full' && (
-          <Badge variant="default">{t('product.badges.enrichment_full')}</Badge>
-        )}
-        {product.has_pending_review && (
-          <Badge variant="destructive">{t('product.badges.pending_review')}</Badge>
-        )}
-      </div>
+      {/* Hero — thumbnail + title + key facts */}
+      <Card className="mb-6">
+        <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => navigate('/products')}
+            className="self-start"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+            {product.images[0] ? (
+              <img
+                src={resolveImageUrl(product.images[0].file_path)}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <Package className="h-8 w-8 text-muted-foreground" />
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-xl font-bold">{product.name}</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+              <span className="font-mono">{product.internal_code}</span>
+              {product.brand && <span>· {product.brand}</span>}
+              {product.category && (
+                <span>
+                  ·{' '}
+                  <Link
+                    to={`/products?category_id=${product.category.id}`}
+                    className="hover:text-primary"
+                  >
+                    {product.category.name}
+                  </Link>
+                </span>
+              )}
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="text-lg font-bold text-foreground">
+                {formatPrice(product.buf_price, product.buf_currency)}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                · {product.buf_quantity ?? 0} шт
+              </span>
+              {product.buf_in_stock ? (
+                <Badge variant="default">{t('product.badges.in_stock')}</Badge>
+              ) : (
+                <Badge variant="secondary">{t('product.badges.out_of_stock')}</Badge>
+              )}
+              {product.enrichment_status === 'none' && (
+                <Badge variant="destructive">{t('product.badges.enrichment_none')}</Badge>
+              )}
+              {product.enrichment_status === 'partial' && (
+                <Badge variant="secondary">{t('product.badges.enrichment_partial')}</Badge>
+              )}
+              {product.enrichment_status === 'full' && (
+                <Badge variant="default">{t('product.badges.enrichment_full')}</Badge>
+              )}
+              {product.has_pending_review && (
+                <Badge variant="destructive">{t('product.badges.pending_review')}</Badge>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tabs: 3 tabs */}
       <Tabs defaultValue="main" className="flex flex-col">
@@ -349,110 +393,88 @@ export function ProductDetailPage() {
           <TabsTrigger value="images">{t('product.tabs.images')}</TabsTrigger>
         </TabsList>
 
-        {/* Tab: Основне — BUF + Enriched + Attributes */}
+        {/* Tab: Основне — BUF | Збагачення | Характеристики */}
         <TabsContent value="main">
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Left column (2/3) */}
-            <div className="space-y-6 lg:col-span-2">
-              {/* BUF Data — all fields from BUF */}
-              <Card className="bg-muted/30">
-                <CardHeader>
-                  <CardTitle>{t('product.buf.title')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.buf.name')}</dt>
-                      <dd className="text-sm">{product.buf_name ?? '—'}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.buf.brand')}</dt>
-                      <dd className="text-sm">{product.buf_brand ?? '—'}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.buf.country')}</dt>
-                      <dd className="text-sm">{ext.buf_country ?? '—'}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.buf.category')}</dt>
-                      <dd className="text-sm">
-                        {product.buf_category ? (
-                          <Link
-                            to={`/products?category_id=${product.buf_category.id}`}
-                            className="text-primary hover:underline"
-                          >
-                            {product.buf_category.name}
-                          </Link>
-                        ) : (
-                          '—'
-                        )}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.buf.code')}</dt>
-                      <dd className="font-mono text-sm">{product.internal_code}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.buf.sku')}</dt>
-                      <dd className="font-mono text-sm">{product.sku}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.buf.uktzed')}</dt>
-                      <dd className="font-mono text-sm">{ext.uktzed ?? '—'}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.buf.quantity')}</dt>
-                      <dd className="text-sm">{product.buf_quantity ?? '—'}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.buf.price')}</dt>
-                      <dd className="text-sm">{formatPrice(product.buf_price, product.buf_currency)}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.info.in_stock')}</dt>
-                      <dd>
-                        {product.buf_in_stock ? (
-                          <Badge variant="default">{t('product.badges.in_stock')}</Badge>
-                        ) : (
-                          <Badge variant="secondary">{t('product.badges.out_of_stock')}</Badge>
-                        )}
-                      </dd>
-                    </div>
-                  </dl>
-                </CardContent>
-              </Card>
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* BUF — read-only original */}
+            <Card className="bg-muted/30">
+              <CardHeader>
+                <CardTitle className="text-base">{t('product.buf.title')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <dt className="text-xs text-muted-foreground">{t('product.buf.name')}</dt>
+                    <dd className="text-sm">{product.buf_name ?? '—'}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-foreground">{t('product.buf.brand')}</dt>
+                    <dd className="text-sm">{product.buf_brand ?? '—'}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-foreground">{t('product.buf.country')}</dt>
+                    <dd className="text-sm">{ext.buf_country ?? '—'}</dd>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <dt className="text-xs text-muted-foreground">{t('product.buf.category')}</dt>
+                    <dd className="text-sm">
+                      {product.buf_category ? (
+                        <Link
+                          to={`/products?category_id=${product.buf_category.id}`}
+                          className="text-primary hover:underline"
+                        >
+                          {product.buf_category.name}
+                        </Link>
+                      ) : (
+                        '—'
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-foreground">{t('product.buf.sku')}</dt>
+                    <dd className="font-mono text-sm">{product.sku}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-foreground">{t('product.buf.uktzed')}</dt>
+                    <dd className="font-mono text-xs">{ext.uktzed ?? '—'}</dd>
+                  </div>
+                </dl>
+              </CardContent>
+            </Card>
 
-              {/* Enriched Data + Attributes — editable */}
+            {/* Збагачення — editable form (or read-only for manager/viewer) */}
             {canEdit ? (
               <Card>
                 <CardHeader>
-                  <CardTitle>{t('product.enriched.title')}</CardTitle>
+                  <CardTitle className="text-base">{t('product.enriched.title')}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
                     <div className="space-y-1.5">
-                      <Label>{t('product.buf.name')}</Label>
+                      <Label className="text-xs">{t('product.buf.name')}</Label>
                       <Input
                         placeholder={product.buf_name ?? t('product.enriched.name_placeholder')}
                         {...form.register('custom_name')}
                       />
                     </div>
-                    <div className="space-y-1.5">
-                      <Label>{t('product.buf.brand')}</Label>
-                      <Input
-                        placeholder={product.buf_brand ?? t('product.enriched.brand_placeholder')}
-                        {...form.register('custom_brand')}
-                      />
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">{t('product.buf.brand')}</Label>
+                        <Input
+                          placeholder={product.buf_brand ?? t('product.enriched.brand_placeholder')}
+                          {...form.register('custom_brand')}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">{t('product.buf.country')}</Label>
+                        <Input
+                          placeholder={t('product.enriched.country_placeholder')}
+                          {...form.register('custom_country')}
+                        />
+                      </div>
                     </div>
                     <div className="space-y-1.5">
-                      <Label>{t('product.buf.country')}</Label>
-                      <Input
-                        placeholder={t('product.enriched.country_placeholder')}
-                        {...form.register('custom_country')}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>{t('product.info.category')}</Label>
+                      <Label className="text-xs">{t('product.info.category')}</Label>
                       <Controller
                         control={form.control}
                         name="custom_category_id"
@@ -478,28 +500,21 @@ export function ProductDetailPage() {
                           );
                         }}
                       />
-                      <p className="text-xs text-muted-foreground">
-                        {t('product.enriched.category_hint')}
-                      </p>
                     </div>
                     <div className="space-y-1.5">
-                      <Label>{t('product.enriched.description')}</Label>
+                      <Label className="text-xs">{t('product.enriched.description')}</Label>
                       <Textarea rows={4} {...form.register('description')} />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>{t('product.enriched.seo_title')}</Label>
+                      <Label className="text-xs">{t('product.enriched.seo_title')}</Label>
                       <Input {...form.register('seo_title')} />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>{t('product.enriched.seo_description')}</Label>
+                      <Label className="text-xs">{t('product.enriched.seo_description')}</Label>
                       <Textarea rows={3} {...form.register('seo_description')} />
                     </div>
 
-                    {/* Attributes inside enriched card */}
-                    <Separator className="my-4" />
-                    <AttributesSection productId={id!} canEdit={canEdit} />
-
-                    <Separator className="my-4" />
+                    <Separator className="my-2" />
 
                     <div className="flex items-center gap-2">
                       <Button type="submit" disabled={updateMutation.isPending}>
@@ -527,13 +542,12 @@ export function ProductDetailPage() {
                 </CardContent>
               </Card>
             ) : (
-              /* Read-only view for manager/viewer */
               <Card>
                 <CardHeader>
-                  <CardTitle>{t('product.enriched.title')}</CardTitle>
+                  <CardTitle className="text-base">{t('product.enriched.title')}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <dl className="grid gap-4 sm:grid-cols-2">
+                  <dl className="grid gap-3 sm:grid-cols-2">
                     <div>
                       <dt className="text-xs text-muted-foreground">{t('product.buf.name')}</dt>
                       <dd className="text-sm">{product.custom_name || product.buf_name || '—'}</dd>
@@ -555,62 +569,17 @@ export function ProductDetailPage() {
                       <dd className="text-sm">{product.seo_description || '—'}</dd>
                     </div>
                   </dl>
-                  <Separator className="my-4" />
-                  <AttributesSection productId={id!} canEdit={false} />
                 </CardContent>
               </Card>
             )}
-            </div>
-
-            {/* Right column (1/3) — summary */}
-            <div>
-              <Card>
-                <CardContent className="pt-6">
-                  <dl className="space-y-5">
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.info.category')}</dt>
-                      <dd className="mt-1 text-base font-semibold">
-                        {product.category ? (
-                          <Link
-                            to={`/products?category_id=${product.category.id}`}
-                            className="text-primary hover:underline"
-                          >
-                            {product.category.name}
-                          </Link>
-                        ) : '—'}
-                      </dd>
-                    </div>
-                    <Separator />
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.buf.code')}</dt>
-                      <dd className="font-mono text-sm">{product.internal_code}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.buf.quantity')}</dt>
-                      <dd className="text-sm">{product.buf_quantity ?? '—'}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.buf.price')}</dt>
-                      <dd className="text-lg font-bold">
-                        {formatPrice(product.buf_price, product.buf_currency)}
-                      </dd>
-                    </div>
-                    <Separator />
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('product.info.in_stock')}</dt>
-                      <dd className="mt-1">
-                        {product.buf_in_stock ? (
-                          <Badge variant="default">{t('product.badges.in_stock')}</Badge>
-                        ) : (
-                          <Badge variant="secondary">{t('product.badges.out_of_stock')}</Badge>
-                        )}
-                      </dd>
-                    </div>
-                  </dl>
-                </CardContent>
-              </Card>
-            </div>
           </div>
+
+          {/* Attributes — full width */}
+          <Card className="mt-6">
+            <CardContent className="pt-6">
+              <AttributesSection productId={id!} canEdit={canEdit} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Tab: Зображення */}
