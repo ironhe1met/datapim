@@ -2,8 +2,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
-import { useEffect } from 'react';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Sparkles,
   ImagePlus,
@@ -203,22 +202,42 @@ export function ProductDetailPage() {
     onError: (err) => showError(extractApiError(err)),
   });
 
-  const uploadImageMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      const response = await apiClient.post(
-        `/api/products/${id}/images`,
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } },
-      );
-      return response.data;
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
+
+  const uploadImagesMutation = useMutation({
+    mutationFn: async (files: File[]) => {
+      setUploadProgress({ done: 0, total: files.length });
+      let ok = 0;
+      const failures: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        try {
+          const formData = new FormData();
+          formData.append('file', f);
+          await apiClient.post(`/api/products/${id}/images`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+          ok += 1;
+        } catch (err) {
+          failures.push(`${f.name}: ${extractApiError(err)}`);
+        }
+        setUploadProgress({ done: i + 1, total: files.length });
+      }
+      return { ok, failures };
     },
-    onSuccess: () => {
+    onSuccess: ({ ok, failures }) => {
       queryClient.invalidateQueries({ queryKey: ['product', id] });
-      showSuccess('Зображення завантажено');
+      setUploadProgress(null);
+      if (failures.length === 0) {
+        showSuccess(`Завантажено ${ok} зображень`);
+      } else {
+        showError(`Завантажено ${ok}, помилки: ${failures.join('; ')}`);
+      }
     },
-    onError: (err) => showError(extractApiError(err)),
+    onError: (err) => {
+      setUploadProgress(null);
+      showError(extractApiError(err));
+    },
   });
 
   const deleteImageMutation = useMutation({
@@ -643,26 +662,32 @@ export function ProductDetailPage() {
               <EmptyState icon={ImagePlus} title={t('product.images.empty')} />
             )}
             {canEdit && (
-              <div className="mt-4 flex gap-2">
+              <div className="mt-4 flex flex-wrap items-center gap-2">
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
+                  multiple
                   className="hidden"
                   onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) uploadImageMutation.mutate(file);
+                    const files = Array.from(e.target.files ?? []);
+                    if (files.length) uploadImagesMutation.mutate(files);
                     e.target.value = '';
                   }}
                 />
                 <Button
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadImageMutation.isPending}
+                  disabled={uploadImagesMutation.isPending}
                 >
                   <Upload className="mr-2 h-4 w-4" />
                   {t('product.images.upload')}
                 </Button>
+                {uploadProgress && (
+                  <span className="text-sm text-muted-foreground">
+                    Завантажую {uploadProgress.done} / {uploadProgress.total}…
+                  </span>
+                )}
                 <Button variant="outline" disabled title="v1.2+">
                   <Sparkles className="mr-2 h-4 w-4" />
                   {t('product.images.generate_ai')}
