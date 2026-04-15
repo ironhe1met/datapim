@@ -93,6 +93,7 @@ export interface Category {
   parent_id: string | null;
   is_active: boolean;
   product_count: number;
+  exclude_from_export: boolean;
   children?: Category[];
 }
 

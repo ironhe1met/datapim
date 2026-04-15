@@ -26,6 +26,7 @@ class CategoryUpdate(BaseModel):
 
     name: str | None = Field(default=None, min_length=1, max_length=255)
     parent_id: UUID | None = None
+    exclude_from_export: bool | None = None
 
 
 class CategoryRead(BaseModel):
@@ -37,6 +38,7 @@ class CategoryRead(BaseModel):
     parent_id: UUID | None
     is_active: bool
     product_count: int
+    exclude_from_export: bool
     created_at: datetime
     updated_at: datetime
 

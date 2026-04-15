@@ -23,6 +23,7 @@ class Category(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     product_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    exclude_from_export: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     __table_args__ = (
         Index("idx_categories_external_id", "external_id", unique=True),

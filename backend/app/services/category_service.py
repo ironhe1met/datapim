@@ -17,6 +17,33 @@ from app.schemas.category import (
 )
 
 
+async def excluded_category_ids(db: AsyncSession) -> set[UUID]:
+    """Return ids of all categories with `exclude_from_export=True`,
+    including their entire descendant subtree.
+
+    Used by export_service to silently drop those categories + their
+    products from the public XML feeds.
+    """
+    cats_rows = (await db.execute(select(Category.id, Category.parent_id, Category.exclude_from_export))).all()
+    children_map: dict[UUID, list[UUID]] = {}
+    excluded_roots: list[UUID] = []
+    for cid, parent_id, excluded in cats_rows:
+        if parent_id is not None:
+            children_map.setdefault(parent_id, []).append(cid)
+        if excluded:
+            excluded_roots.append(cid)
+    out: set[UUID] = set()
+    stack = list(excluded_roots)
+    while stack:
+        node = stack.pop()
+        if node in out:
+            continue
+        out.add(node)
+        for ch in children_map.get(node, []):
+            stack.append(ch)
+    return out
+
+
 async def _compute_product_counts(db: AsyncSession) -> dict[UUID, int]:
     """Live recursive product_count: own products + all descendants'."""
     # 1) Direct counts per category via resolved category (custom ?? buf).
@@ -233,6 +260,9 @@ async def update_category(db: AsyncSession, category_id: UUID, data: CategoryUpd
             if await _would_create_cycle(db, category_id, new_parent_id):
                 raise _invalid_parent_exc()
             category.parent_id = new_parent_id
+
+    if "exclude_from_export" in fields_set and data.exclude_from_export is not None:
+        category.exclude_from_export = data.exclude_from_export
 
     db.add(category)
     await db.commit()

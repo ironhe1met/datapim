@@ -10,6 +10,8 @@ import {
   Pencil,
   Sparkles,
   Plus,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -74,6 +76,7 @@ interface CategoryNodeProps {
   isAdmin: boolean;
   onNavigate: (categoryId: string) => void;
   onEdit: (category: Category) => void;
+  onToggleExport: (category: Category) => void;
   t: (key: string) => string;
 }
 
@@ -87,6 +90,7 @@ function CategoryNode({
   isAdmin,
   onNavigate,
   onEdit,
+  onToggleExport,
   t,
 }: CategoryNodeProps) {
   const hasChildren = category.children && category.children.length > 0;
@@ -140,6 +144,32 @@ function CategoryNode({
           {category.product_count} {t('categories.products_count')}
         </Badge>
 
+        {category.exclude_from_export && (
+          <Badge variant="destructive" className="text-xs">
+            не в XML
+          </Badge>
+        )}
+
+        {canEdit && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            title={
+              category.exclude_from_export
+                ? 'Включити в XML експорт'
+                : 'Виключити з XML експорту'
+            }
+            onClick={() => onToggleExport(category)}
+          >
+            {category.exclude_from_export ? (
+              <EyeOff className="h-3 w-3 text-destructive" />
+            ) : (
+              <Eye className="h-3 w-3" />
+            )}
+          </Button>
+        )}
+
         {canEdit && (
           <Button
             variant="ghost"
@@ -172,6 +202,7 @@ function CategoryNode({
               isAdmin={isAdmin}
               onNavigate={onNavigate}
               onEdit={onEdit}
+              onToggleExport={onToggleExport}
               t={t}
             />
           ))}
@@ -243,6 +274,31 @@ export function CategoriesPage() {
     },
     onError: (err) => showError(extractApiError(err)),
   });
+
+  const toggleExportMutation = useMutation({
+    mutationFn: async (data: { id: string; exclude_from_export: boolean }) => {
+      const response = await apiClient.patch(`/api/categories/${data.id}`, {
+        exclude_from_export: data.exclude_from_export,
+      });
+      return response.data;
+    },
+    onSuccess: (_d, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      showSuccess(
+        vars.exclude_from_export
+          ? 'Категорію виключено з XML'
+          : 'Категорію включено в XML',
+      );
+    },
+    onError: (err) => showError(extractApiError(err)),
+  });
+
+  const handleToggleExport = (category: Category) => {
+    toggleExportMutation.mutate({
+      id: category.id,
+      exclude_from_export: !category.exclude_from_export,
+    });
+  };
 
   const toggleExpanded = (id: string) => {
     setExpandedIds((prev) => {
@@ -357,6 +413,7 @@ export function CategoriesPage() {
               isAdmin={isAdmin}
               onNavigate={handleNavigate}
               onEdit={handleEdit}
+              onToggleExport={handleToggleExport}
               t={t}
             />
           ))}

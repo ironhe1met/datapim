@@ -59,6 +59,7 @@ async def get_category(
         parent_id=category.parent_id,
         is_active=category.is_active,
         product_count=category.product_count,
+        exclude_from_export=category.exclude_from_export,
         created_at=category.created_at,
         updated_at=category.updated_at,
         children=[{"id": c.id, "name": c.name, "product_count": c.product_count} for c in children],

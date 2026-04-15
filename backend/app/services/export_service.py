@@ -18,6 +18,7 @@ from app.config import get_settings
 from app.models.category import Category
 from app.models.product import Product
 from app.models.product_image import ProductImage
+from app.services.category_service import excluded_category_ids
 
 
 def _iso(dt: datetime | None) -> str:
@@ -43,11 +44,18 @@ async def generate_products_xml(session: AsyncSession) -> str:
     settings = get_settings()
     api_base = settings.api_url.rstrip("/")
 
+    excluded = await excluded_category_ids(session)
+
     stmt = select(Product).where(
         Product.buf_in_stock.is_(True),
         Product.is_active.is_(True),
     )
     products = list((await session.execute(stmt)).scalars().all())
+    if excluded:
+        products = [
+            p for p in products
+            if (p.custom_category_id or p.buf_category_id) not in excluded
+        ]
 
     # Resolved category per product (custom ?? buf) comes via the model
     # relationships (selectin), but we still need a map for external_id lookup.
@@ -115,6 +123,8 @@ async def generate_categories_xml(session: AsyncSession) -> str:
     Only categories that contain at least one active + in-stock product are
     included.
     """
+    excluded = await excluded_category_ids(session)
+
     stmt = (
         select(Category)
         .join(
@@ -125,6 +135,8 @@ async def generate_categories_xml(session: AsyncSession) -> str:
         .distinct()
     )
     cats = list((await session.execute(stmt)).scalars().all())
+    if excluded:
+        cats = [c for c in cats if c.id not in excluded]
 
     # Map internal UUID → external_id for parent lookup.
     if cats:
@@ -153,30 +165,27 @@ async def generate_categories_xml(session: AsyncSession) -> str:
 
 
 async def export_settings(session: AsyncSession) -> dict:
-    """Counts for the admin dashboard."""
-    products_count = int(
-        (
-            await session.execute(
-                select(func.count(Product.id)).where(
-                    Product.buf_in_stock.is_(True), Product.is_active.is_(True)
-                )
-            )
-        ).scalar_one()
+    """Counts for the admin dashboard (mirror what the XML feeds will emit)."""
+    excluded = await excluded_category_ids(session)
+    resolved_cat = func.coalesce(Product.custom_category_id, Product.buf_category_id)
+
+    products_q = select(func.count(Product.id)).where(
+        Product.buf_in_stock.is_(True), Product.is_active.is_(True)
     )
-    categories_count = int(
-        (
-            await session.execute(
-                select(func.count(func.distinct(Category.id)))
-                .select_from(Category)
-                .join(
-                    Product,
-                    func.coalesce(Product.custom_category_id, Product.buf_category_id)
-                    == Category.id,
-                )
-                .where(Product.buf_in_stock.is_(True), Product.is_active.is_(True))
-            )
-        ).scalar_one()
+    if excluded:
+        products_q = products_q.where(~resolved_cat.in_(excluded))
+    products_count = int((await session.execute(products_q)).scalar_one())
+
+    cats_q = (
+        select(func.count(func.distinct(Category.id)))
+        .select_from(Category)
+        .join(Product, resolved_cat == Category.id)
+        .where(Product.buf_in_stock.is_(True), Product.is_active.is_(True))
     )
+    if excluded:
+        cats_q = cats_q.where(~Category.id.in_(excluded))
+    categories_count = int((await session.execute(cats_q)).scalar_one())
+
     return {
         "products_url": "/export/products.xml",
         "categories_url": "/export/categories.xml",
