@@ -4,7 +4,7 @@
 - **Pipeline:** app
 - **Platform:** web
 - **Current version:** v0.0.0
-- **Current stage:** developer
+- **Current stage:** qa
 
 ## Stages
 
@@ -15,8 +15,8 @@
 | 3 | architect | completed | 2026-04-13 | Monolith, FastAPI+React, 8 tables, 42 endpoints |
 | 4 | design | completed | 2026-04-13 | 12 screens, design system, UI patterns |
 | 5 | frontend-skeleton | completed | 2026-04-14 | 12 screens, MSW mocks, auth, RBAC, permission-aware UI, i18n, dark mode |
-| 6 | developer | in_progress | 2026-04-14 | — |
-| 7 | qa | pending | — | — |
+| 6 | developer | completed | 2026-04-16 | Backend (FastAPI, 168 tests), frontend connected, bulk tools, override pattern для category, 22 commits після initial dev |
+| 7 | qa | in_progress | — | Audit done overnight (`qa_report.md`, 0 critical/3 major fixed). Лишилось pre-prod regression + UI smoke зранку перед deploy |
 | 8 | performance | pending | — | — |
 | 9 | security | pending | — | — |
 | 10 | devops | pending | — | — |
