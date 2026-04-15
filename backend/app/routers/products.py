@@ -42,6 +42,7 @@ async def list_products(
     in_stock: bool | None = Query(None),
     enrichment_status: str | None = Query(None, pattern="^(none|partial|full)$"),
     has_pending_review: bool | None = Query(None),
+    brand: str | None = Query(None),
     sort_by: str = Query("created_at", pattern="^(name|price|created_at)$"),
     sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     db: AsyncSession = Depends(get_session),
@@ -56,6 +57,7 @@ async def list_products(
         in_stock=in_stock,
         enrichment_status=enrichment_status,
         has_pending_review=has_pending_review,
+        brand=brand,
         sort_by=sort_by,
         sort_order=sort_order,
     )
@@ -64,6 +66,15 @@ async def list_products(
         data=data,
         meta=build_meta(total=total, page=page, per_page=per_page),
     )
+
+
+@router.get("/brands")
+async def list_brands(
+    db: AsyncSession = Depends(get_session),
+    _user: User = Depends(get_current_user),
+) -> dict:
+    """Distinct resolved brands with product counts (for filter dropdown)."""
+    return {"data": await product_service.list_brands(db)}
 
 
 @router.get("/{product_id}", response_model=ProductDetail)

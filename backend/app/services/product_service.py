@@ -111,6 +111,7 @@ async def list_products(
     in_stock: bool | None = None,
     enrichment_status: str | None = None,
     has_pending_review: bool | None = None,
+    brand: str | None = None,
     sort_by: str = "created_at",
     sort_order: str = "desc",
 ) -> tuple[list[ProductListItem], int]:
@@ -141,6 +142,12 @@ async def list_products(
 
     if has_pending_review is not None:
         filters.append(Product.has_pending_review == has_pending_review)
+
+    if brand is not None and brand:
+        # Match resolved brand (custom_brand ?? buf_brand) exactly.
+        filters.append(
+            func.coalesce(Product.custom_brand, Product.buf_brand) == brand
+        )
 
     # Total
     count_stmt = select(func.count(Product.id))
@@ -476,3 +483,24 @@ async def bulk_update(db: AsyncSession, data: BulkUpdateRequest) -> BulkUpdateRe
     )
     await db.commit()
     return BulkUpdateResponse(matched=matched, updated=matched, sample=sample)
+
+
+# --- Distinct brands -------------------------------------------------------
+
+
+async def list_brands(db: AsyncSession) -> list[dict]:
+    """Distinct resolved brands with product counts.
+
+    Sorted by name. Empty/null brands collapsed into one "(без бренду)" bucket.
+    """
+    resolved = func.coalesce(Product.custom_brand, Product.buf_brand)
+    stmt = (
+        select(resolved.label("name"), func.count(Product.id).label("cnt"))
+        .group_by(resolved)
+        .order_by(resolved.asc().nulls_last())
+    )
+    rows = (await db.execute(stmt)).all()
+    return [
+        {"name": (name or "").strip() or "(без бренду)", "count": int(cnt)}
+        for (name, cnt) in rows
+    ]

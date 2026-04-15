@@ -50,6 +50,7 @@ export function ProductsPage() {
 
   const search = searchParams.get('search') ?? '';
   const categoryId = searchParams.get('category_id') ?? '';
+  const brand = searchParams.get('brand') ?? '';
   const inStock = searchParams.get('in_stock') ?? '';
   const enrichmentStatus = searchParams.get('enrichment_status') ?? '';
   const page = Number(searchParams.get('page') ?? '1');
@@ -58,7 +59,7 @@ export function ProductsPage() {
   const [searchInput, setSearchInput] = useState(search);
   const isUserTyping = useRef(false);
 
-  const hasActiveFilters = search || categoryId || inStock || enrichmentStatus;
+  const hasActiveFilters = search || categoryId || inStock || enrichmentStatus || brand;
 
   // Debounced search — only when user types, not on URL changes
   useEffect(() => {
@@ -126,10 +127,21 @@ export function ProductsPage() {
     },
   });
 
+  const { data: brands } = useQuery({
+    queryKey: ['products', 'brands'],
+    queryFn: async () => {
+      const response = await apiClient.get<{ data: Array<{ name: string; count: number }> }>(
+        '/api/products/brands',
+      );
+      return response.data.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data, isLoading } = useQuery({
     queryKey: [
       'products',
-      { search, category_id: categoryId, in_stock: inStock, enrichment_status: enrichmentStatus, page, perPage },
+      { search, category_id: categoryId, brand, in_stock: inStock, enrichment_status: enrichmentStatus, page, perPage },
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -137,6 +149,7 @@ export function ProductsPage() {
       params.set('per_page', String(perPage));
       if (search) params.set('search', search);
       if (categoryId) params.set('category_id', categoryId);
+      if (brand) params.set('brand', brand);
       if (inStock) params.set('in_stock', inStock);
       if (enrichmentStatus) params.set('enrichment_status', enrichmentStatus);
       const response = await apiClient.get<PaginatedResponse<ProductListItem>>(
@@ -218,6 +231,23 @@ export function ProductsPage() {
                 </SelectItem>
               )) ?? []),
             ])}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={brand || '__all__'}
+          onValueChange={(val) => updateFilter('brand', val === '__all__' ? '' : (val ?? ''))}
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue>{brand || 'Всі бренди'}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Всі бренди</SelectItem>
+            {(brands ?? []).map((b) => (
+              <SelectItem key={b.name} value={b.name}>
+                {b.name} ({b.count})
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
