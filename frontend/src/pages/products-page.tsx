@@ -53,6 +53,7 @@ export function ProductsPage() {
   const inStock = searchParams.get('in_stock') ?? '';
   const enrichmentStatus = searchParams.get('enrichment_status') ?? '';
   const page = Number(searchParams.get('page') ?? '1');
+  const perPage = Number(searchParams.get('per_page') ?? '20');
 
   const [searchInput, setSearchInput] = useState(search);
   const isUserTyping = useRef(false);
@@ -128,12 +129,12 @@ export function ProductsPage() {
   const { data, isLoading } = useQuery({
     queryKey: [
       'products',
-      { search, category_id: categoryId, in_stock: inStock, enrichment_status: enrichmentStatus, page },
+      { search, category_id: categoryId, in_stock: inStock, enrichment_status: enrichmentStatus, page, perPage },
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.set('page', String(page));
-      params.set('per_page', '10');
+      params.set('per_page', String(perPage));
       if (search) params.set('search', search);
       if (categoryId) params.set('category_id', categoryId);
       if (inStock) params.set('in_stock', inStock);
@@ -144,6 +145,15 @@ export function ProductsPage() {
       return response.data;
     },
   });
+
+  const setPerPage = (val: number) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('per_page', String(val));
+      next.set('page', '1');
+      return next;
+    });
+  };
 
   function renderEnrichmentBadge(status: string) {
     switch (status) {
@@ -335,30 +345,48 @@ export function ProductsPage() {
           </Table>
 
           {/* Pagination */}
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4 flex items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              {t('products.table.name')}: {data.meta.total}
+              Всього: {data.meta.total}
             </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon-sm"
-                disabled={page <= 1}
-                onClick={() => setPage(page - 1)}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm">
-                {page} / {data.meta.last_page}
-              </span>
-              <Button
-                variant="outline"
-                size="icon-sm"
-                disabled={page >= data.meta.last_page}
-                onClick={() => setPage(page + 1)}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">На сторінці:</span>
+                <Select
+                  value={String(perPage)}
+                  onValueChange={(v) => setPerPage(Number(v ?? '20'))}
+                >
+                  <SelectTrigger className="h-8 w-20">
+                    <SelectValue>{perPage}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1)}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm">
+                  {page} / {data.meta.last_page}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  disabled={page >= data.meta.last_page}
+                  onClick={() => setPage(page + 1)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </>
