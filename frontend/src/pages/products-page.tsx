@@ -270,16 +270,17 @@ export function ProductsPage() {
         </div>
       ) : data && data.data.length > 0 ? (
         <>
-          <Table>
+          <Table className="w-full table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead>{t('products.table.name')}</TableHead>
-                <TableHead>{t('products.table.sku')}</TableHead>
-                <TableHead>{t('products.table.category')}</TableHead>
-                <TableHead className="text-right">Кількість</TableHead>
-                <TableHead>{t('products.table.price')}</TableHead>
-                <TableHead>{t('products.table.in_stock')}</TableHead>
-                <TableHead>{t('products.table.enrichment')}</TableHead>
+                <TableHead className="w-[28%]">{t('products.table.name')}</TableHead>
+                <TableHead className="w-[12%]">Код</TableHead>
+                <TableHead className="w-[12%]">Бренд</TableHead>
+                <TableHead className="w-[18%]">{t('products.table.category')}</TableHead>
+                <TableHead className="w-[7%] text-right">Кількість</TableHead>
+                <TableHead className="w-[10%] text-right">{t('products.table.price')}</TableHead>
+                <TableHead className="w-[8%]">{t('products.table.in_stock')}</TableHead>
+                <TableHead className="w-[5%]">{t('products.table.enrichment')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -289,7 +290,7 @@ export function ProductsPage() {
                   className="cursor-pointer"
                   onClick={() => navigate(`/products/${product.id}`)}
                 >
-                  <TableCell>
+                  <TableCell className="overflow-hidden">
                     <div className="flex items-center gap-3">
                       {product.primary_image ? (
                         <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded bg-muted">
@@ -304,17 +305,24 @@ export function ProductsPage() {
                           <Package className="h-4 w-4 text-muted-foreground" />
                         </div>
                       )}
-                      <span className="font-medium">{product.name}</span>
+                      <span className="truncate font-medium" title={product.name}>
+                        {product.name}
+                      </span>
                     </div>
                   </TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {product.sku}
+                  <TableCell className="truncate font-mono text-xs" title={product.internal_code}>
+                    {product.internal_code}
                   </TableCell>
-                  <TableCell>{product.category?.name ?? '—'}</TableCell>
+                  <TableCell className="truncate" title={product.brand ?? ''}>
+                    {product.brand ?? '—'}
+                  </TableCell>
+                  <TableCell className="truncate" title={product.category?.name ?? ''}>
+                    {product.category?.name ?? '—'}
+                  </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {product.quantity ?? 0}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-right tabular-nums whitespace-nowrap">
                     {formatPrice(product.price, product.currency)}
                   </TableCell>
                   <TableCell>{renderStockBadge(product.in_stock)}</TableCell>
