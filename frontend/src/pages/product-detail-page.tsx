@@ -330,26 +330,10 @@ export function ProductDetailPage() {
         </Breadcrumb>
       </div>
 
-      {/* Hero — image | name+code | (right) badges + price stacked */}
-      <Card className="mb-6 overflow-hidden">
-        <div className="flex flex-col gap-6 p-6 md:flex-row md:items-stretch">
-          {/* Image */}
-          <div className="h-32 w-32 flex-shrink-0 self-center overflow-hidden rounded-xl bg-muted ring-1 ring-border md:self-auto">
-            {product.images[0] ? (
-              <img
-                src={resolveImageUrl(product.images[0].file_path)}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center">
-                <Package className="h-12 w-12 text-muted-foreground/40" />
-              </div>
-            )}
-          </div>
-
-          {/* Identity — name + clickable code */}
-          <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
+      {/* Hero — name + code (left) + enrichment status badges (right) */}
+      <Card className="mb-6">
+        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
             <h1 className="text-2xl font-bold leading-tight tracking-tight">
               {product.name}
             </h1>
@@ -359,7 +343,7 @@ export function ProductDetailPage() {
                 navigator.clipboard.writeText(product.internal_code);
                 showSuccess('Код скопійовано');
               }}
-              className="group inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+              className="group mt-2 inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
               title="Клікни щоб скопіювати"
             >
               <span>Код:</span>
@@ -367,37 +351,19 @@ export function ProductDetailPage() {
               <Copy className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
             </button>
           </div>
-
-          {/* Right zone — badges (top) + price (bottom), stacked, divider */}
-          <div className="flex flex-col justify-between gap-4 border-t pt-4 md:items-end md:border-l md:border-t-0 md:pl-6 md:pt-0">
-            <div className="flex flex-wrap gap-2 md:justify-end">
-              {product.buf_in_stock ? (
-                <Badge variant="default">{t('product.badges.in_stock')}</Badge>
-              ) : (
-                <Badge variant="secondary">{t('product.badges.out_of_stock')}</Badge>
-              )}
-              {product.enrichment_status === 'none' && (
-                <Badge variant="destructive">{t('product.badges.enrichment_none')}</Badge>
-              )}
-              {product.enrichment_status === 'partial' && (
-                <Badge variant="secondary">{t('product.badges.enrichment_partial')}</Badge>
-              )}
-              {product.enrichment_status === 'full' && (
-                <Badge variant="default">{t('product.badges.enrichment_full')}</Badge>
-              )}
-              {product.has_pending_review && (
-                <Badge variant="destructive">{t('product.badges.pending_review')}</Badge>
-              )}
-            </div>
-            <div className="flex flex-col gap-0.5 md:items-end">
-              <span className="text-3xl font-bold tracking-tight">
-                {formatPrice(product.buf_price, product.buf_currency)}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                Залишок:{' '}
-                <strong className="text-foreground">{product.buf_quantity ?? 0}</strong> шт
-              </span>
-            </div>
+          <div className="flex flex-wrap gap-2 sm:justify-end">
+            {product.enrichment_status === 'none' && (
+              <Badge variant="destructive">{t('product.badges.enrichment_none')}</Badge>
+            )}
+            {product.enrichment_status === 'partial' && (
+              <Badge variant="secondary">{t('product.badges.enrichment_partial')}</Badge>
+            )}
+            {product.enrichment_status === 'full' && (
+              <Badge variant="default">{t('product.badges.enrichment_full')}</Badge>
+            )}
+            {product.has_pending_review && (
+              <Badge variant="destructive">{t('product.badges.pending_review')}</Badge>
+            )}
           </div>
         </div>
       </Card>
@@ -409,14 +375,57 @@ export function ProductDetailPage() {
           <TabsTrigger value="images">{t('product.tabs.images')}</TabsTrigger>
         </TabsList>
 
-        {/* Tab: Основне — BUF | Збагачення | Характеристики */}
+        {/* Tab: Основне — Image+Stats above BUF | Збагачення | Характеристики */}
         <TabsContent value="main">
           <div className="grid gap-6 lg:grid-cols-3">
-            {/* BUF — read-only original (compact 1/3) */}
-            <Card className="bg-muted/30 lg:col-span-1">
-              <CardHeader>
-                <CardTitle className="text-base">{t('product.buf.title')}</CardTitle>
-              </CardHeader>
+            {/* LEFT column: Image+Stats card → BUF card */}
+            <div className="space-y-6 lg:col-span-1">
+              {/* Image + price/quantity/in-stock */}
+              <Card>
+                <CardContent className="grid grid-cols-2 gap-4 p-4">
+                  <div className="aspect-square overflow-hidden rounded-lg bg-muted ring-1 ring-border">
+                    {product.images[0] ? (
+                      <img
+                        src={resolveImageUrl(product.images[0].file_path)}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Package className="h-12 w-12 text-muted-foreground/40" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col justify-center gap-2">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Ціна</p>
+                      <p className="text-xl font-bold leading-tight">
+                        {formatPrice(product.buf_price, product.buf_currency)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Залишок</p>
+                      <p className="text-sm">
+                        <strong>{product.buf_quantity ?? 0}</strong> шт
+                      </p>
+                    </div>
+                    <div>
+                      <p className="mb-1 text-xs text-muted-foreground">Наявність</p>
+                      {product.buf_in_stock ? (
+                        <Badge variant="default">{t('product.badges.in_stock')}</Badge>
+                      ) : (
+                        <Badge variant="secondary">{t('product.badges.out_of_stock')}</Badge>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* BUF — read-only original */}
+              <Card className="bg-muted/30">
+                <CardHeader>
+                  <CardTitle className="text-base">{t('product.buf.title')}</CardTitle>
+                </CardHeader>
               <CardContent>
                 <dl className="space-y-1.5 text-sm">
                   {(
@@ -467,7 +476,8 @@ export function ProductDetailPage() {
                   ))}
                 </dl>
               </CardContent>
-            </Card>
+              </Card>
+            </div>
 
             {/* Збагачення — editable form (or read-only for manager/viewer), wider 2/3 */}
             {canEdit ? (
