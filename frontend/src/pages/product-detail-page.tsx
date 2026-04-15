@@ -318,9 +318,9 @@ export function ProductDetailPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      {/* Hero — thumbnail + title + key facts */}
+      {/* Hero — bigger thumbnail + title + key facts */}
       <Card className="mb-6">
-        <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+        <CardContent className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center">
           <Button
             variant="ghost"
             size="icon-sm"
@@ -329,7 +329,7 @@ export function ProductDetailPage() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+          <div className="flex h-32 w-32 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
             {product.images[0] ? (
               <img
                 src={resolveImageUrl(product.images[0].file_path)}
@@ -337,32 +337,22 @@ export function ProductDetailPage() {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <Package className="h-8 w-8 text-muted-foreground" />
+              <Package className="h-12 w-12 text-muted-foreground" />
             )}
           </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-xl font-bold">{product.name}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-              <span className="font-mono">{product.internal_code}</span>
-              {product.brand && <span>· {product.brand}</span>}
-              {product.category && (
-                <span>
-                  ·{' '}
-                  <Link
-                    to={`/products?category_id=${product.category.id}`}
-                    className="hover:text-primary"
-                  >
-                    {product.category.name}
-                  </Link>
-                </span>
-              )}
+          <div className="min-w-0 flex-1 space-y-3">
+            <div>
+              <h1 className="text-2xl font-bold leading-tight">{product.name}</h1>
+              <p className="mt-1 font-mono text-sm text-muted-foreground">
+                {product.internal_code}
+              </p>
             </div>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="text-lg font-bold text-foreground">
+            <div className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
+              <span className="text-2xl font-bold">
                 {formatPrice(product.buf_price, product.buf_currency)}
               </span>
               <span className="text-sm text-muted-foreground">
-                · {product.buf_quantity ?? 0} шт
+                {product.buf_quantity ?? 0} шт
               </span>
               {product.buf_in_stock ? (
                 <Badge variant="default">{t('product.badges.in_stock')}</Badge>
