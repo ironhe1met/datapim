@@ -376,8 +376,8 @@ export function ProductDetailPage() {
             <div className="space-y-6 lg:col-span-1">
               {/* Image + price/quantity/in-stock */}
               <Card>
-                <CardContent className="grid grid-cols-2 items-start gap-4 p-4">
-                  <div className="aspect-square overflow-hidden rounded-lg bg-muted ring-1 ring-border">
+                <CardContent className="flex items-start gap-4 p-4">
+                  <div className="aspect-square w-[40%] flex-shrink-0 overflow-hidden rounded-lg bg-muted ring-1 ring-border">
                     {product.images[0] ? (
                       <img
                         src={resolveImageUrl(product.images[0].file_path)}
@@ -386,11 +386,11 @@ export function ProductDetailPage() {
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center">
-                        <Package className="h-12 w-12 text-muted-foreground/40" />
+                        <Package className="h-10 w-10 text-muted-foreground/40" />
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col items-end gap-3 text-right">
+                  <div className="flex flex-1 flex-col items-end gap-3 text-right">
                     <div>
                       <p className="text-xs text-muted-foreground">Ціна</p>
                       <p className="text-xl font-bold leading-tight">
@@ -475,12 +475,12 @@ export function ProductDetailPage() {
 
             {/* Збагачення — editable form (or read-only for manager/viewer), wider 2/3 */}
             {canEdit ? (
-              <Card className="lg:col-span-2">
+              <Card className="flex flex-col lg:col-span-2">
                 <CardHeader>
                   <CardTitle className="text-base">{t('product.enriched.title')}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                <CardContent className="flex flex-1 flex-col">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-1 flex-col space-y-3">
                     <div className="space-y-1.5">
                       <Label className="text-xs">{t('product.buf.name')}</Label>
                       <Input
@@ -536,15 +536,15 @@ export function ProductDetailPage() {
                       <Textarea rows={3} {...form.register('seo_description')} />
                     </div>
 
+                    {/* spacer pushes buttons to bottom */}
+                    <div className="flex-1" />
+
                     <Separator className="my-2" />
 
-                    <div className="flex items-center gap-2">
-                      <Button type="submit" disabled={updateMutation.isPending}>
-                        {t('product.enriched.save')}
-                      </Button>
+                    <div className="flex items-center justify-end gap-3 pt-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger
-                          render={<Button variant="ghost" type="button" />}
+                          render={<Button variant="outline" size="lg" type="button" />}
                         >
                           {t('product.enriched.reset')}
                         </DropdownMenuTrigger>
@@ -559,6 +559,13 @@ export function ProductDetailPage() {
                           ))}
                         </DropdownMenuContent>
                       </DropdownMenu>
+                      <Button
+                        type="submit"
+                        size="lg"
+                        disabled={updateMutation.isPending}
+                      >
+                        {t('product.enriched.save')}
+                      </Button>
                     </div>
                   </form>
                 </CardContent>
