@@ -12,6 +12,7 @@ import {
   Plus,
   Eye,
   EyeOff,
+  Trash2,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,16 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { PageHeader } from '@/components/page-header';
 import { EmptyState } from '@/components/empty-state';
 import axios from 'axios';
@@ -77,6 +88,7 @@ interface CategoryNodeProps {
   onNavigate: (categoryId: string) => void;
   onEdit: (category: Category) => void;
   onToggleExport: (category: Category) => void;
+  onDelete: (category: Category) => void;
   inheritedExcluded?: boolean;
   t: (key: string) => string;
 }
@@ -92,6 +104,7 @@ function CategoryNode({
   onNavigate,
   onEdit,
   onToggleExport,
+  onDelete,
   inheritedExcluded = false,
   t,
 }: CategoryNodeProps) {
@@ -189,8 +202,21 @@ function CategoryNode({
             size="icon"
             className="h-6 w-6"
             onClick={() => onEdit(category)}
+            title="Редагувати"
           >
             <Pencil className="h-3 w-3" />
+          </Button>
+        )}
+
+        {isAdmin && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-destructive hover:text-destructive"
+            onClick={() => onDelete(category)}
+            title="Видалити"
+          >
+            <Trash2 className="h-3 w-3" />
           </Button>
         )}
 
@@ -216,6 +242,7 @@ function CategoryNode({
               onNavigate={onNavigate}
               onEdit={onEdit}
               onToggleExport={onToggleExport}
+              onDelete={onDelete}
               inheritedExcluded={effectiveExcluded}
               t={t}
             />
@@ -340,6 +367,27 @@ export function CategoriesPage() {
     });
   };
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiClient.delete(`/api/categories/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      showSuccess('Категорію видалено');
+      setDeleteDialogOpen(false);
+      setDeletingCategory(null);
+    },
+    onError: (err) => showError(extractApiError(err)),
+  });
+
+  const handleDelete = (category: Category) => {
+    setDeletingCategory(category);
+    setDeleteDialogOpen(true);
+  };
+
   const toggleExpanded = (id: string) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
@@ -454,6 +502,7 @@ export function CategoriesPage() {
               onNavigate={handleNavigate}
               onEdit={handleEdit}
               onToggleExport={handleToggleExport}
+              onDelete={handleDelete}
               t={t}
             />
           ))}
@@ -541,6 +590,33 @@ export function CategoriesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Видалити категорію {deletingCategory?.name}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Якщо в категорії є підкатегорії або товари — операція буде
+              скасована з повідомленням. Видалити можна лише порожню.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() =>
+                deletingCategory && deleteMutation.mutate(deletingCategory.id)
+              }
+              disabled={deleteMutation.isPending}
+            >
+              Видалити
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

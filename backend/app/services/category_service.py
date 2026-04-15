@@ -268,3 +268,50 @@ async def update_category(db: AsyncSession, category_id: UUID, data: CategoryUpd
     await db.commit()
     await db.refresh(category)
     return category
+
+
+async def delete_category(db: AsyncSession, category_id: UUID) -> None:
+    """Hard-delete a category. Refuses if it has children or referenced products.
+
+    R-015 originally said categories are import-only; that was relaxed to allow
+    manual create + delete (decision 2026-04-16).
+    """
+    from app.models.product import Product
+
+    category = await get_category(db, category_id)
+    if category is None:
+        raise _not_found_exc()
+
+    children_count = (
+        await db.execute(
+            select(func.count(Category.id)).where(Category.parent_id == category_id)
+        )
+    ).scalar_one()
+    if children_count:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": "Спершу видаліть або перенесіть підкатегорії",
+                "code": "CATEGORY_HAS_CHILDREN",
+            },
+        )
+
+    products_count = (
+        await db.execute(
+            select(func.count(Product.id)).where(
+                (Product.buf_category_id == category_id)
+                | (Product.custom_category_id == category_id)
+            )
+        )
+    ).scalar_one()
+    if products_count:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": f"У категорії {products_count} товарів — спершу перенесіть їх",
+                "code": "CATEGORY_HAS_PRODUCTS",
+            },
+        )
+
+    await db.delete(category)
+    await db.commit()

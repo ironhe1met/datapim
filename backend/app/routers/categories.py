@@ -98,3 +98,14 @@ async def update_category(
         actor_id=str(actor.id),
     )
     return CategoryRead.model_validate(category)
+
+
+@router.delete("/{category_id}")
+async def delete_category(
+    category_id: UUID,
+    db: AsyncSession = Depends(get_session),
+    actor: User = Depends(require_role("admin")),
+) -> dict[str, str]:
+    await category_service.delete_category(db, category_id)
+    logger.info("category_deleted", category_id=str(category_id), actor_id=str(actor.id))
+    return {"message": "Category deleted"}

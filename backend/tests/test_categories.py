@@ -424,3 +424,53 @@ async def test_update_not_found(client: AsyncClient, admin_user, admin_headers) 
     )
     assert resp.status_code == 404
     assert resp.json()["code"] == "NOT_FOUND"
+
+
+# --- DELETE ----------------------------------------------------------------
+
+
+async def test_delete_empty_category(client: AsyncClient, admin_user, admin_headers):
+    create = await client.post(
+        "/api/categories",
+        headers=admin_headers,
+        json={"name": "Doomed"},
+    )
+    cid = create.json()["id"]
+
+    resp = await client.delete(f"/api/categories/{cid}", headers=admin_headers)
+    assert resp.status_code == 200, resp.text
+
+    gone = await client.get(f"/api/categories/{cid}", headers=admin_headers)
+    assert gone.status_code == 404
+
+
+async def test_delete_category_with_children_blocked(
+    client: AsyncClient, admin_user, admin_headers
+):
+    parent = await client.post("/api/categories", headers=admin_headers, json={"name": "Parent"})
+    pid = parent.json()["id"]
+    child = await client.post(
+        "/api/categories", headers=admin_headers, json={"name": "Child", "parent_id": pid}
+    )
+    cid = child.json()["id"]
+
+    resp = await client.delete(f"/api/categories/{pid}", headers=admin_headers)
+    assert resp.status_code == 400
+    assert resp.json()["code"] == "CATEGORY_HAS_CHILDREN"
+
+    # cleanup so the test DB is clean
+    await client.delete(f"/api/categories/{cid}", headers=admin_headers)
+    await client.delete(f"/api/categories/{pid}", headers=admin_headers)
+
+
+async def test_delete_category_requires_admin(
+    client: AsyncClient, admin_user, admin_headers, operator_headers
+):
+    create = await client.post(
+        "/api/categories", headers=admin_headers, json={"name": "OperatorBlocked"}
+    )
+    cid = create.json()["id"]
+    resp = await client.delete(f"/api/categories/{cid}", headers=operator_headers)
+    assert resp.status_code == 403
+    # cleanup
+    await client.delete(f"/api/categories/{cid}", headers=admin_headers)
