@@ -41,13 +41,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { CategoryPicker, flattenCategories } from '@/components/category-picker';
 import { EmptyState } from '@/components/empty-state';
 import { AttributesSection } from '@/components/attributes-section';
 import axios from 'axios';
@@ -117,14 +111,14 @@ export function ProductDetailPage() {
   const canEdit = hasRole(['admin', 'operator']);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch categories for the select
-  const { data: categoriesData } = useQuery({
-    queryKey: ['categories-flat'],
+  // Fetch categories tree for the searchable picker (flattened with depth)
+  const { data: categoryItems } = useQuery({
+    queryKey: ['categories', 'tree-for-picker'],
     queryFn: async () => {
       const response = await apiClient.get<{ data: Category[] }>(
-        '/api/categories?per_page=500',
+        '/api/categories?tree=true',
       );
-      return response.data.data;
+      return flattenCategories(response.data.data);
     },
   });
 
@@ -382,7 +376,7 @@ export function ProductDetailPage() {
             <div className="space-y-6 lg:col-span-1">
               {/* Image + price/quantity/in-stock */}
               <Card>
-                <CardContent className="grid grid-cols-2 gap-4 p-4">
+                <CardContent className="grid grid-cols-2 items-start gap-4 p-4">
                   <div className="aspect-square overflow-hidden rounded-lg bg-muted ring-1 ring-border">
                     {product.images[0] ? (
                       <img
@@ -396,7 +390,7 @@ export function ProductDetailPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col justify-center gap-2">
+                  <div className="flex flex-col items-end gap-3 text-right">
                     <div>
                       <p className="text-xs text-muted-foreground">Ціна</p>
                       <p className="text-xl font-bold leading-tight">
@@ -515,27 +509,18 @@ export function ProductDetailPage() {
                       <Controller
                         control={form.control}
                         name="custom_category_id"
-                        render={({ field }) => {
-                          const selectedCat = (categoriesData ?? []).find((c) => c.id === field.value);
-                          return (
-                            <Select value={field.value || ''} onValueChange={(val) => field.onChange(val ?? '')}>
-                              <SelectTrigger>
-                                <SelectValue>
-                                  {selectedCat
-                                    ? selectedCat.name
-                                    : product.category?.name ?? t('product.enriched.category_placeholder')}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent>
-                                {(categoriesData ?? []).map((cat) => (
-                                  <SelectItem key={cat.id} value={cat.id}>
-                                    {cat.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          );
-                        }}
+                        render={({ field }) => (
+                          <CategoryPicker
+                            items={categoryItems ?? []}
+                            value={field.value || ''}
+                            onChange={(id) => field.onChange(id)}
+                            placeholder={
+                              product.category?.name ??
+                              t('product.enriched.category_placeholder')
+                            }
+                            allowClear={false}
+                          />
+                        )}
                       />
                     </div>
                     <div className="space-y-1.5">
