@@ -77,6 +77,7 @@ interface CategoryNodeProps {
   onNavigate: (categoryId: string) => void;
   onEdit: (category: Category) => void;
   onToggleExport: (category: Category) => void;
+  inheritedExcluded?: boolean;
   t: (key: string) => string;
 }
 
@@ -91,8 +92,10 @@ function CategoryNode({
   onNavigate,
   onEdit,
   onToggleExport,
+  inheritedExcluded = false,
   t,
 }: CategoryNodeProps) {
+  const effectiveExcluded = inheritedExcluded || category.exclude_from_export;
   const hasChildren = category.children && category.children.length > 0;
   const isExpanded = expandedIds.has(category.id);
 
@@ -113,7 +116,9 @@ function CategoryNode({
   return (
     <div>
       <div
-        className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted/50"
+        className={`flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted/50 ${
+          effectiveExcluded ? 'opacity-60' : ''
+        }`}
         style={{ paddingLeft: `${level * 24 + 8}px` }}
       >
         <button
@@ -149,20 +154,28 @@ function CategoryNode({
             не в XML
           </Badge>
         )}
+        {!category.exclude_from_export && inheritedExcluded && (
+          <Badge variant="secondary" className="text-xs">
+            успадковано
+          </Badge>
+        )}
 
         {canEdit && (
           <Button
             variant="ghost"
             size="icon"
             className="h-6 w-6"
+            disabled={inheritedExcluded && !category.exclude_from_export}
             title={
-              category.exclude_from_export
-                ? 'Включити в XML експорт'
-                : 'Виключити з XML експорту'
+              inheritedExcluded && !category.exclude_from_export
+                ? 'Виключено через батьківську категорію'
+                : category.exclude_from_export
+                  ? 'Включити в XML експорт'
+                  : 'Виключити з XML експорту'
             }
             onClick={() => onToggleExport(category)}
           >
-            {category.exclude_from_export ? (
+            {effectiveExcluded ? (
               <EyeOff className="h-3 w-3 text-destructive" />
             ) : (
               <Eye className="h-3 w-3" />
@@ -203,6 +216,7 @@ function CategoryNode({
               onNavigate={onNavigate}
               onEdit={onEdit}
               onToggleExport={onToggleExport}
+              inheritedExcluded={effectiveExcluded}
               t={t}
             />
           ))}
