@@ -1,5 +1,17 @@
 # DataPIM — Deployment Runbook
 
+> **TL;DR — first deploy in 4 commands** (after VPS + DNS A-record exist):
+>
+> ```bash
+> sudo mkdir -p /opt/datapim && sudo chown $USER:$USER /opt/datapim
+> git clone <repo-url> /opt/datapim && cd /opt/datapim
+> cp deploy/.env.prod.example .env.prod && nano .env.prod   # edit DOMAIN, ADMIN_EMAIL, DEV_*
+> sudo bash deploy/setup.sh
+> ```
+>
+> The script generates secrets, gets the Let's Encrypt cert, builds images,
+> brings the stack up, runs migrations, and seeds the admin user. Re-runnable.
+
 Step-by-step guide for a human operator deploying DataPIM to a fresh VPS for
 the first time, plus routine ops procedures.
 
