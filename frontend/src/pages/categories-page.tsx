@@ -282,15 +282,41 @@ export function CategoriesPage() {
       });
       return response.data;
     },
+    onMutate: async (vars) => {
+      // Optimistic update: flip the flag in the cached tree before server replies.
+      await queryClient.cancelQueries({ queryKey: ['categories', 'tree'] });
+      const previous = queryClient.getQueryData<Category[]>(['categories', 'tree']);
+
+      const flip = (nodes: Category[]): Category[] =>
+        nodes.map((n) => ({
+          ...n,
+          exclude_from_export:
+            n.id === vars.id ? vars.exclude_from_export : n.exclude_from_export,
+          children: n.children ? flip(n.children) : n.children,
+        }));
+
+      if (previous) {
+        queryClient.setQueryData<Category[]>(['categories', 'tree'], flip(previous));
+      }
+      return { previous };
+    },
+    onError: (err, _vars, ctx) => {
+      // Roll back on failure.
+      if (ctx?.previous) {
+        queryClient.setQueryData(['categories', 'tree'], ctx.previous);
+      }
+      showError(extractApiError(err));
+    },
     onSuccess: (_d, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
       showSuccess(
         vars.exclude_from_export
           ? 'Категорію виключено з XML'
           : 'Категорію включено в XML',
       );
     },
-    onError: (err) => showError(extractApiError(err)),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    },
   });
 
   const handleToggleExport = (category: Category) => {
