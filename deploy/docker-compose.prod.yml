@@ -5,7 +5,8 @@
 # Notes:
 # - Postgres is dedicated to this project (NOT the shared daedalus-postgres dev container).
 # - Backend runs `alembic upgrade head` on boot before uvicorn.
-# - nginx is the public entry point on :80 / :443.
+# - nginx is the internal entry point on :3000 (HTTP only, no SSL).
+# - SSL terminates on the external proxy VPS (see proxy-setup.sh).
 
 name: datapim
 
@@ -103,12 +104,9 @@ services:
       - backend
       - frontend
     ports:
-      - "80:80"
-      - "443:443"
+      - "${LISTEN_PORT:-3000}:80"
     volumes:
-      - ./nginx-prod.conf:/etc/nginx/conf.d/default.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - certbot_webroot:/var/www/certbot:ro
+      - ./nginx-internal.conf:/etc/nginx/conf.d/default.conf:ro
       - uploads_data:/var/www/uploads:ro
     networks:
       - datapim_net
@@ -120,8 +118,6 @@ volumes:
     name: datapim_uploads
   inbox_data:
     name: datapim_inbox
-  certbot_webroot:
-    name: datapim_certbot_webroot
 
 networks:
   datapim_net:
