@@ -47,6 +47,9 @@ export interface Product {
   name: string;
   brand: string | null;
   description: string | null;
+  short_description: string | null;
+  video_url: string | null;
+  internal_notes: string | null;
   seo_title: string | null;
   seo_description: string | null;
   images: ProductImage[];

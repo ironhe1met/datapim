@@ -344,6 +344,12 @@ async def update_product(db: AsyncSession, product_id: UUID, data: ProductUpdate
         product.custom_country = data.custom_country
     if "description" in fields_set:
         product.description = data.description
+    if "short_description" in fields_set:
+        product.short_description = data.short_description
+    if "video_url" in fields_set:
+        product.video_url = data.video_url
+    if "internal_notes" in fields_set:
+        product.internal_notes = data.internal_notes
     if "seo_title" in fields_set:
         product.seo_title = data.seo_title
     if "seo_description" in fields_set:

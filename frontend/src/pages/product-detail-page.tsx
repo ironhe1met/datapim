@@ -81,6 +81,9 @@ interface EnrichedFormData {
   custom_country: string;
   custom_category_id: string;
   description: string;
+  short_description: string;
+  video_url: string;
+  internal_notes: string;
   seo_title: string;
   seo_description: string;
 }
@@ -91,6 +94,9 @@ const RESETTABLE_FIELDS = [
   'custom_country',
   'custom_category_id',
   'description',
+  'short_description',
+  'video_url',
+  'internal_notes',
   'seo_title',
   'seo_description',
 ] as const;
@@ -138,6 +144,9 @@ export function ProductDetailPage() {
       custom_country: '',
       custom_category_id: '',
       description: '',
+      short_description: '',
+      video_url: '',
+      internal_notes: '',
       seo_title: '',
       seo_description: '',
     },
@@ -151,6 +160,9 @@ export function ProductDetailPage() {
         custom_country: (product as unknown as ProductExtended).custom_country ?? '',
         custom_category_id: product.category?.id ?? '',
         description: product.description ?? '',
+        short_description: product.short_description ?? '',
+        video_url: product.video_url ?? '',
+        internal_notes: product.internal_notes ?? '',
         seo_title: product.seo_title ?? '',
         seo_description: product.seo_description ?? '',
       });
@@ -164,6 +176,9 @@ export function ProductDetailPage() {
         custom_brand: data.custom_brand || null,
         custom_country: data.custom_country || null,
         description: data.description || null,
+        short_description: data.short_description || null,
+        video_url: data.video_url || null,
+        internal_notes: data.internal_notes || null,
         seo_title: data.seo_title || null,
         seo_description: data.seo_description || null,
       };
@@ -497,7 +512,7 @@ export function ProductDetailPage() {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs">{t('product.buf.country')}</Label>
+                        <Label className="text-xs">Країна виробника</Label>
                         <Input
                           placeholder={t('product.enriched.country_placeholder')}
                           {...form.register('custom_country')}
@@ -524,8 +539,30 @@ export function ProductDetailPage() {
                       />
                     </div>
                     <div className="space-y-1.5">
+                      <Label className="text-xs">Короткий опис</Label>
+                      <Textarea
+                        rows={2}
+                        className="min-h-[60px] resize-none overflow-hidden"
+                        style={{ fieldSizing: 'content' } as React.CSSProperties}
+                        placeholder="До 300 символів — для каталогу партнера"
+                        {...form.register('short_description')}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
                       <Label className="text-xs">{t('product.enriched.description')}</Label>
-                      <Textarea rows={4} {...form.register('description')} />
+                      <Textarea
+                        rows={4}
+                        className="min-h-[80px] resize-none overflow-hidden"
+                        style={{ fieldSizing: 'content' } as React.CSSProperties}
+                        {...form.register('description')}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Відео</Label>
+                      <Input
+                        placeholder="https://youtube.com/watch?v=..."
+                        {...form.register('video_url')}
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs">{t('product.enriched.seo_title')}</Label>
@@ -533,7 +570,23 @@ export function ProductDetailPage() {
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs">{t('product.enriched.seo_description')}</Label>
-                      <Textarea rows={3} {...form.register('seo_description')} />
+                      <Textarea
+                        rows={3}
+                        className="min-h-[60px] resize-none overflow-hidden"
+                        style={{ fieldSizing: 'content' } as React.CSSProperties}
+                        {...form.register('seo_description')}
+                      />
+                    </div>
+                    <Separator className="my-2" />
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Внутрішні нотатки (не йде в експорт)</Label>
+                      <Textarea
+                        rows={2}
+                        className="min-h-[50px] resize-none overflow-hidden border-dashed"
+                        style={{ fieldSizing: 'content' } as React.CSSProperties}
+                        placeholder="Нотатки для операторів..."
+                        {...form.register('internal_notes')}
+                      />
                     </div>
 
                     {/* spacer pushes buttons to bottom */}

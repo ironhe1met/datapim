@@ -120,9 +120,12 @@ class ProductDetail(BaseModel):
     uktzed: str | None
     is_active: bool
 
-    description: str | None
-    seo_title: str | None
-    seo_description: str | None
+    description: str | None = None
+    short_description: str | None = None
+    video_url: str | None = None
+    internal_notes: str | None = None
+    seo_title: str | None = None
+    seo_description: str | None = None
 
     enrichment_status: EnrichmentStatus
     has_pending_review: bool
@@ -154,6 +157,9 @@ class ProductUpdate(BaseModel):
     custom_country: str | None = Field(default=None, max_length=100)
     custom_category_id: UUID | None = None
     description: str | None = None
+    short_description: str | None = None
+    video_url: str | None = Field(default=None, max_length=500)
+    internal_notes: str | None = None
     seo_title: str | None = Field(default=None, max_length=255)
     seo_description: str | None = None
 
@@ -165,6 +171,9 @@ RESETTABLE_FIELDS: frozenset[str] = frozenset(
         "custom_country",
         "custom_category_id",
         "description",
+        "short_description",
+        "video_url",
+        "internal_notes",
         "seo_title",
         "seo_description",
     }
