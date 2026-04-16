@@ -23,6 +23,12 @@ err()  { printf "\033[1;31m✗\033[0m %s\n" "$*" >&2; }
 
 # --- 1. Pre-flight ---------------------------------------------------------
 log "Pre-flight checks"
+# Ensure cifs-utils is installed (for BUF SMB sync).
+dpkg -l cifs-utils >/dev/null 2>&1 || {
+  log "Installing cifs-utils for BUF sync"
+  apt-get install -y cifs-utils >/dev/null 2>&1 || warn "cifs-utils install failed (optional)"
+}
+
 command -v docker >/dev/null || { err "docker not found. Install: curl -fsSL https://get.docker.com | sudo sh"; exit 1; }
 docker compose version >/dev/null 2>&1 || { err "docker compose plugin missing"; exit 1; }
 [[ -f "$ENV_FILE" ]] || { err ".env.prod not found. cp deploy/.env.prod.example .env.prod"; exit 1; }
