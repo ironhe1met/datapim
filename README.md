@@ -119,12 +119,48 @@ domain=WORKGROUP
 
 ## Оновлення (re-deploy)
 
+### Як працює цикл розробки
+
+```
+Розробник (локально)
+    ↓ git push
+GitHub repo (ironhe1met/datapim)
+    ↓ git pull (на кожному сервері)
+Production сервери
+```
+
+1. Розробник пушить зміни в GitHub
+2. На production сервері(ах) — `git pull` + restart
+3. Міграції БД виконуються автоматично при старті backend
+4. Якщо кілька серверів — кожен робить git pull незалежно
+
+### Команди оновлення
+
+**На сервері (SSH):**
 ```bash
 cd /opt/datapim
 git pull
-sudo docker compose -f deploy/docker-compose.prod.yml --env-file .env.prod build
-sudo docker compose -f deploy/docker-compose.prod.yml --env-file .env.prod up -d
-# Міграції виконуються автоматично при старті backend
+sudo docker compose -f deploy/docker-compose.prod.yml --env-file .env.prod up -d --build
+```
+
+**Або віддалено (з локального ПК):**
+```bash
+ssh web-mg "cd /opt/datapim && git pull && sudo docker compose -f deploy/docker-compose.prod.yml --env-file .env.prod up -d --build"
+```
+
+`--build` перебудовує images тільки якщо код змінився (кеш Docker).
+Якщо змін в коді нема (тільки конфіги) — без `--build`:
+```bash
+ssh web-mg "cd /opt/datapim && git pull && sudo docker compose -f deploy/docker-compose.prod.yml --env-file .env.prod up -d"
+```
+
+### Відкат до попередньої версії
+
+```bash
+cd /opt/datapim
+git log --oneline -5              # знайти потрібний commit
+git checkout <commit-hash>
+sudo docker compose -f deploy/docker-compose.prod.yml --env-file .env.prod up -d --build
 ```
 
 ## Корисні команди
